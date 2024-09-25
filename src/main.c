@@ -60,10 +60,9 @@ static void parse_args(int argc, char **argv) {
                     outfile = *argv;
                     break;
                 case '-':
-                    if (!strcmp(*argv, "--dump-ast")) {
+                    if (!strcmp(*argv, "--dump-ast"))
                         dump_ast = true;
-                        break;
-                    }
+                    break;
                 default:
                     print_usage_and_exit();
             }
@@ -111,10 +110,13 @@ int main(int argc, char **argv) {
 
     for (Iter i = list_iter(toplevels); !iter_end(i);) {
         Ast *v = iter_next(&i);
-        if (dump_ast)
-            printf("%s \n", ast_to_string(v, true));
-        else
+        if (dump_ast) {
+            char *aststr = ast_to_string(v, true);
+            printf("%s \n", aststr);
+            free(aststr);
+        } else {
             emit_toplevel(v);
+        }
     }
     list_free(cstrings);
     list_free(ctypes);
