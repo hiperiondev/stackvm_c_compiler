@@ -40,6 +40,7 @@ static inline String make_string(void) {
             .nalloc = INIT_SIZE,
             .len = 0,
     };
+
     return ret;
 }
 

@@ -26,8 +26,7 @@ extern FILE *outfp;
 static bool dump_ast;
 
 static void usage() {
-    fprintf(stdout,
-            "mzcc [options] filename\n"
+    fprintf(stdout, "stackvm_c_compiler [options] filename\n"
             "OPTIONS\n"
             "  -o filename            Write output to the specified file.\n"
             "  --dump-ast             Dump abstract syntax tree(AST)\n");
@@ -81,7 +80,7 @@ static void parse_args(int argc, char **argv) {
 static void open_output_file() {
     if (outfile) {
         if (!(outfp = fopen(outfile, "w"))) {
-            printf("Can not open file %s\n", outfile);
+            printf("Can't open file %s\n", outfile);
             exit(1);
         }
     } else {
@@ -96,7 +95,7 @@ static void open_input_file() {
     }
 
     if (!freopen(infile, "r", stdin)) {
-        printf("Can not open file %s\n", infile);
+        printf("Can't open file %s\n", infile);
         exit(1);
     }
 }
@@ -119,5 +118,8 @@ int main(int argc, char **argv) {
     }
     list_free(cstrings);
     list_free(ctypes);
+
+    fclose(outfp);
+
     return 0;
 }

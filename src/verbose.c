@@ -159,7 +159,9 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             break;
         }
         case AST_DECL:
-            string_appendf(buf, "%*s(DECL) %s %s", tab, "", ctype_to_string(ast->declvar->ctype), ast->declvar->varname);
+            if (!excpt)
+                string_appendf(buf, "%*s", tab, "");
+            string_appendf(buf, "(DECL) %s %s", ctype_to_string(ast->declvar->ctype), ast->declvar->varname);
             if (ast->declinit) {
                 it;
                 string_appendf(buf, " %s", ast_to_string(ast->declinit, true));
@@ -181,7 +183,9 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             string_appendf(buf, "%*s(IF)\n", tab, "");
             it;
             cont = true;
+            excpt = true;
             string_appendf(buf, "%*s(CONDITION) %s\n", tab, "", ast_to_string(ast->cond, true));
+            excpt = false;
             it;
             string_appendf(buf, "%s", ast_to_string(ast->then, true));
             dt;
@@ -198,7 +202,9 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             string_appendf(buf, "(? %s %s %s)", ast_to_string(ast->cond, true), ast_to_string(ast->then, true), ast_to_string(ast->els, true));
             break;
         case AST_FOR:
+            excpt = true;
             string_appendf(buf, "%*s(FOR %s %s %s) \n", tab, "", ast_to_string(ast->forinit, true), ast_to_string(ast->forcond, true), ast_to_string(ast->forstep, true));
+            excpt = false;
             it;
             no_break = true;
             string_appendf(buf, "%s", ast_to_string(ast->forbody, false));
