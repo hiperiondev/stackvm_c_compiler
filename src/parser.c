@@ -60,6 +60,7 @@ static Ctype* read_decl_int(Token *name);
 
 static Ast* ast_uop(int type, Ctype *ctype, Ast *operand) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
     r->ctype = ctype;
     r->operand = operand;
@@ -68,6 +69,7 @@ static Ast* ast_uop(int type, Ctype *ctype, Ast *operand) {
 
 static Ast* ast_binop(int type, Ast *left, Ast *right) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
     r->ctype = result_type(type, left->ctype, right->ctype);
     if (type != '=' && convert_array(left->ctype)->type != CTYPE_PTR && convert_array(right->ctype)->type == CTYPE_PTR) {
@@ -82,6 +84,7 @@ static Ast* ast_binop(int type, Ast *left, Ast *right) {
 
 static Ast* ast_inttype(Ctype *ctype, long val) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
     r->ctype = ctype;
     r->ival = val;
@@ -90,6 +93,7 @@ static Ast* ast_inttype(Ctype *ctype, long val) {
 
 static Ast* ast_double(double val) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
 #ifdef ALLOW_DOUBLE
     r->ctype = ctype_double;
@@ -103,12 +107,14 @@ static Ast* ast_double(double val) {
 
 char* make_label(void) {
     String s = make_string();
+    add_str_ptr(mkstr, mkstr_qty, s.body);
     string_appendf(&s, ".L%d", labelseq++);
     return get_cstring(s);
 }
 
 static Ast* ast_lvar(Ctype *ctype, char *name) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LVAR;
     r->ctype = ctype;
     r->varname = name;
@@ -120,6 +126,7 @@ static Ast* ast_lvar(Ctype *ctype, char *name) {
 
 static Ast* ast_gvar(Ctype *ctype, char *name, bool filelocal) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_GVAR;
     r->ctype = ctype;
     r->varname = name;
@@ -130,6 +137,7 @@ static Ast* ast_gvar(Ctype *ctype, char *name, bool filelocal) {
 
 static Ast* ast_string(char *str) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRING;
     r->ctype = make_array_type(ctype_char, strlen(str) + 1);
     r->sval = str;
@@ -139,6 +147,7 @@ static Ast* ast_string(char *str) {
 
 static Ast* ast_funcall(Ctype *ctype, char *fname, List *args) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNCALL;
     r->ctype = ctype;
     r->fname = fname;
@@ -148,6 +157,7 @@ static Ast* ast_funcall(Ctype *ctype, char *fname, List *args) {
 
 static Ast* ast_func(Ctype *rettype, char *fname, List *params, Ast *body, List *localvars) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNC;
     r->ctype = rettype;
     r->fname = fname;
@@ -159,6 +169,7 @@ static Ast* ast_func(Ctype *rettype, char *fname, List *params, Ast *body, List 
 
 static Ast* ast_decl(Ast *var, Ast *init) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_DECL;
     r->ctype = NULL;
     r->declvar = var;
@@ -168,6 +179,7 @@ static Ast* ast_decl(Ast *var, Ast *init) {
 
 static Ast* ast_array_init(List *arrayinit) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_ARRAY_INIT;
     r->ctype = NULL;
     r->arrayinit = arrayinit;
@@ -176,6 +188,7 @@ static Ast* ast_array_init(List *arrayinit) {
 
 static Ast* ast_if(Ast *cond, Ast *then, Ast *els) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_IF;
     r->ctype = NULL;
     r->cond = cond;
@@ -186,6 +199,7 @@ static Ast* ast_if(Ast *cond, Ast *then, Ast *els) {
 
 static Ast* ast_ternary(Ctype *ctype, Ast *cond, Ast *then, Ast *els) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_TERNARY;
     r->ctype = ctype;
     r->cond = cond;
@@ -196,6 +210,7 @@ static Ast* ast_ternary(Ctype *ctype, Ast *cond, Ast *then, Ast *els) {
 
 static Ast* ast_for(Ast *init, Ast *cond, Ast *step, Ast *body) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FOR;
     r->ctype = NULL;
     r->forinit = init;
@@ -207,6 +222,7 @@ static Ast* ast_for(Ast *init, Ast *cond, Ast *step, Ast *body) {
 
 static Ast* ast_return(Ast *retval) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_RETURN;
     r->ctype = NULL;
     r->retval = retval;
@@ -215,6 +231,7 @@ static Ast* ast_return(Ast *retval) {
 
 static Ast* ast_compound_stmt(List *stmts) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_COMPOUND_STMT;
     r->ctype = NULL;
     r->stmts = stmts;
@@ -223,6 +240,7 @@ static Ast* ast_compound_stmt(List *stmts) {
 
 static Ast* ast_struct_ref(Ctype *ctype, Ast *struc, char *name) {
     Ast *r = malloc(sizeof(Ast));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRUCT_REF;
     r->ctype = ctype;
     r->struc = struc;
@@ -232,6 +250,7 @@ static Ast* ast_struct_ref(Ctype *ctype, Ast *struc, char *name) {
 
 static Ctype* make_ptr_type(Ctype *ctype) {
     Ctype *r = malloc(sizeof(Ctype));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_PTR;
     r->ptr = ctype;
     r->size = 8;
@@ -241,6 +260,7 @@ static Ctype* make_ptr_type(Ctype *ctype) {
 
 static Ctype* make_array_type(Ctype *ctype, int len) {
     Ctype *r = malloc(sizeof(Ctype));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_ARRAY;
     r->ptr = ctype;
     r->size = (len < 0) ? -1 : ctype->size * len;
@@ -251,6 +271,7 @@ static Ctype* make_array_type(Ctype *ctype, int len) {
 
 static Ctype* make_struct_field_type(Ctype *ctype, int offset) {
     Ctype *r = malloc(sizeof(Ctype));
+    add_str_ptr(mkstr, mkstr_qty, r);
     memcpy(r, ctype, sizeof(Ctype));
     r->offset = offset;
     list_push(ctypes, r);
@@ -259,6 +280,7 @@ static Ctype* make_struct_field_type(Ctype *ctype, int offset) {
 
 static Ctype* make_struct_type(Dict *fields, int size) {
     Ctype *r = malloc(sizeof(Ctype));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_STRUCT;
     r->fields = fields;
     r->size = size;

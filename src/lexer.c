@@ -31,6 +31,9 @@
 static bool ungotten = false;
 static Token ungotten_buf = { 0 };
 
+void **mkstr = NULL;
+long mkstr_qty = 0;
+
 static Token make_token(enum TokenType type, uintptr_t data) {
     Token ret = {
             .type = type,
@@ -51,6 +54,7 @@ static int getc_nonspace(void) {
 
 static Token read_number(char c) {
     String s = make_string();
+    add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
     while (1) {
         int c = getc(stdin);
@@ -84,6 +88,7 @@ err:
 
 static Token read_string(void) {
     String s = make_string();
+    add_str_ptr(mkstr, mkstr_qty, s.body);
     while (1) {
         int c = getc(stdin);
         if (c == EOF)
@@ -111,6 +116,7 @@ static Token read_string(void) {
 
 static Token read_ident(char c) {
     String s = make_string();
+    add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
     while (1) {
         int c2 = getc(stdin);

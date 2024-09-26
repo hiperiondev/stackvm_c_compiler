@@ -25,6 +25,9 @@ static char *outfile = NULL, *infile = NULL;
 extern FILE *outfp;
 static bool dump_ast;
 
+extern void **mkstr;
+extern long mkstr_qty;
+
 static void usage() {
     fprintf(stdout, "stackvm_c_compiler [options] filename\n"
             "OPTIONS\n"
@@ -103,6 +106,7 @@ int main(int argc, char **argv) {
     parse_args(argc, argv);
     open_input_file();
     open_output_file();
+    mkstr = malloc(sizeof(void*));
 
     List *toplevels = read_toplevels();
     if (!dump_ast)
@@ -113,13 +117,18 @@ int main(int argc, char **argv) {
         if (dump_ast) {
             char *aststr = ast_to_string(v, true);
             printf("%s \n", aststr);
-            free(aststr);
+            lfree(aststr);
         } else {
             emit_toplevel(v);
         }
     }
-    list_free(cstrings);
-    list_free(ctypes);
+
+    for (long n = 0; n < mkstr_qty; n++) {
+        if (mkstr[n] != NULL)
+            free(mkstr[n]);
+        mkstr[n] = NULL;
+    }
+    free(mkstr);
 
     fclose(outfp);
 

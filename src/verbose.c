@@ -75,15 +75,15 @@ char* ctype_to_string(Ctype *ctype) {
 static void uop_to_string(String *buf, char *op, Ast *ast) {
     char *aststr = ast_to_string(ast->operand, true);
     string_appendf(buf, "(%s %s)", op, aststr);
-    free(aststr);
+    lfree(aststr);
 }
 
 static void binop_to_string(String *buf, char *op, Ast *ast) {
     char *aststr1 = ast_to_string(ast->left, true);
     char *aststr2 = ast_to_string(ast->right, true);
     string_appendf(buf, "(%s %s %s)", op, aststr1, aststr2);
-    free(aststr1);
-    free(aststr2);
+    lfree(aststr1);
+    lfree(aststr2);
 }
 
 static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
@@ -129,8 +129,11 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
                     error("internal error");
             }
             break;
-        case AST_STRING:
-            string_appendf(buf, "(STRING) \"%s\"", quote_cstring(ast->sval));
+        case AST_STRING: {
+            char *aststr = quote_cstring(ast->sval);
+            string_appendf(buf, "(STRING) \"%s\"", aststr);
+            lfree(aststr);
+        }
             break;
         case AST_LVAR:
             string_appendf(buf, "(LVAR) %s", ast->varname);
@@ -148,7 +151,7 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
                 string_appendf(buf, "\n");
                 char *aststr = ast_to_string(iter_next(&i), true);
                 string_appendf(buf, "%*s%s", tab, "", aststr);
-                free(aststr);
+                lfree(aststr);
             }
             dt;
             excpt = false;
@@ -159,9 +162,9 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             it;
             for (Iter i = list_iter(ast->params); !iter_end(i);) {
                 Ast *param = iter_next(&i);
-                char *aststr = ast_to_string(param, true);
-                string_appendf(buf, "%s %s\n", ctype_to_string(param->ctype), aststr);
-                free(aststr);
+                char *aststr4 = ast_to_string(param, true);
+                string_appendf(buf, "%s %s\n", ctype_to_string(param->ctype), aststr4);
+                lfree(aststr4);
             }
 
             ast_to_string_int(buf, ast->body, false);
@@ -176,7 +179,7 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
                 it;
                 char *aststr = ast_to_string(ast->declinit, true);
                 string_appendf(buf, " %s", aststr);
-                free(aststr);
+                lfree(aststr);
                 dt;
             }
         }
@@ -199,12 +202,12 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             excpt = true;
             char *aststr = ast_to_string(ast->cond, true);
             string_appendf(buf, "%*s(CONDITION) %s\n", tab, "", aststr);
-            free(aststr);
+            lfree(aststr);
             excpt = false;
             it;
             aststr = ast_to_string(ast->then, true);
             string_appendf(buf, "%s", aststr);
-            free(aststr);
+            lfree(aststr);
             dt;
             if (ast->els) {
                 string_appendf(buf, "\n");
@@ -221,26 +224,28 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             char *aststr2 = ast_to_string(ast->then, true);
             char *aststr3 = ast_to_string(ast->els, true);
             string_appendf(buf, "(? %s %s %s)", aststr1, aststr2, aststr3);
-            free(aststr1);
-            free(aststr2);
-            free(aststr3);
+            lfree(aststr1);
+            lfree(aststr2);
+            lfree(aststr3);
         }
             break;
         case AST_FOR: {
             excpt = true;
+
             char *aststr1 = ast_to_string(ast->forinit, true);
             char *aststr2 = ast_to_string(ast->forcond, true);
             char *aststr3 = ast_to_string(ast->forstep, true);
             string_appendf(buf, "%*s(FOR %s %s %s) \n", tab, "", aststr1, aststr2, aststr3);
+            lfree(aststr1);
+            lfree(aststr2);
+            lfree(aststr3);
+
             excpt = false;
-            free(aststr1);
-            free(aststr2);
-            free(aststr3);
             it;
             no_break = true;
-            aststr1 =  ast_to_string(ast->forbody, false);
-            string_appendf(buf, "%s", aststr1);
-            free(aststr1);
+            char *aststr4 = ast_to_string(ast->forbody, false);
+            string_appendf(buf, "%s", aststr4);
+            lfree(aststr4);
             no_break = false;
             dt;
         }
@@ -248,7 +253,7 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
         case AST_RETURN: {
             char *aststr = ast_to_string(ast->retval, true);
             string_appendf(buf, "%*s(RETURN) %s", tab, "", aststr);
-            free(aststr);
+            lfree(aststr);
         }
             break;
         case AST_COMPOUND_STMT: {
@@ -325,8 +330,8 @@ static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
                 string_appendf(buf, "\n");
             }
 
-            free(left);
-            free(right);
+            lfree(left);
+            lfree(right);
     }
 }
 

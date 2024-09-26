@@ -21,6 +21,15 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "util.h"
+
+extern void **mkstr;
+extern long mkstr_qty;
+
+#define add_str_ptr(list, qty, ptr)                        \
+            list[qty++] = (void*)(ptr);                    \
+            list = realloc(list, (qty + 1) * sizeof(void*))
+
 typedef struct __ListNode {
     void *elem;
     struct __ListNode *next, *prev;
@@ -39,6 +48,7 @@ typedef struct {
 
 static inline List* make_list(void) {
     List *r = malloc(sizeof(List));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->len = 0;
     r->head = r->tail = NULL;
     return r;
@@ -46,6 +56,7 @@ static inline List* make_list(void) {
 
 static inline void* make_node(void *elem) {
     ListNode *r = malloc(sizeof(ListNode));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->elem = elem;
     r->next = NULL;
     r->prev = NULL;
@@ -74,7 +85,14 @@ static inline void* list_pop(List *list) {
         list->tail->next = NULL;
     else
         list->head = NULL;
+
+    for (long n = 0; n < mkstr_qty; n++) {
+        if (mkstr[n] == tail)
+            mkstr[n] = NULL;
+    }
+
     free(tail);
+    tail = NULL;
     return r;
 }
 
@@ -124,6 +142,13 @@ static inline Iter list_iter(void *ptr) {
             ListNode *node, *tmp;
             list_for_each_safe (node, tmp, list)
             {
+                for (long n = 0; n < mkstr_qty; n++) {
+                    if (mkstr[n] == node->elem)
+                        mkstr[n] = NULL;
+                    if (mkstr[n] == node)
+                        mkstr[n] = NULL;
+                }
+
                 free(node->elem);
                 free(node);
             }

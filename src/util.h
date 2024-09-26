@@ -22,8 +22,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "list.h"
+
+extern void **mkstr;
+extern long mkstr_qty;
+
+#define add_str_ptr(list, qty, ptr)                        \
+            list[qty++] = (void*)(ptr);                    \
+            list = realloc(list, (qty + 1) * sizeof(void*))
 
 typedef struct {
     char *body;
@@ -33,6 +41,22 @@ typedef struct {
 static List *cstrings = &EMPTY_LIST;
 
 #define INIT_SIZE 8
+
+inline void lfree(void *ptr) {
+    long pos = LONG_MAX;
+
+    for (long n = 0; n < mkstr_qty; n++)
+        if ((void*) mkstr[n] == ptr) {
+            pos = n;
+            break;
+        }
+
+    if (pos != LONG_MAX) {
+        mkstr[pos] = NULL;
+    }
+
+    free(ptr);
+}
 
 static inline String make_string(void) {
     String ret = {
@@ -46,9 +70,13 @@ static inline String make_string(void) {
 
 static inline void realloc_body(String *s) {
     int newsize = s->nalloc * 2;
+
     char *body = realloc(s->body, newsize);
     s->body = body;
     s->nalloc = newsize;
+
+    add_str_ptr(mkstr, mkstr_qty, s->body);
+
 }
 
 static inline char* get_cstring(const String s) {
@@ -58,20 +86,42 @@ static inline char* get_cstring(const String s) {
 }
 
 static inline void string_append(String *s, char c) {
-    if (s->nalloc == (s->len + 1))
+    long pos = LONG_MAX;
+
+    if (s->nalloc == (s->len + 1)) {
+        for (long n = 0; n < mkstr_qty; n++)
+            if ((void*) mkstr[n] == (void*) s->body) {
+                pos = n;
+                break;
+            }
+
+        if (pos != LONG_MAX)
+            mkstr[pos] = NULL;
+
         realloc_body(s);
+    }
     s->body[s->len++] = c;
     s->body[s->len] = '\0';
 }
 
 static inline void string_appendf(String *s, char *fmt, ...) {
     va_list args;
+    long pos = LONG_MAX;
     while (1) {
         int avail = s->nalloc - s->len;
         va_start(args, fmt);
         int written = vsnprintf(s->body + s->len, avail, fmt, args);
         va_end(args);
         if (avail <= written) {
+            for (long n = 0; n < mkstr_qty; n++)
+                if ((void*) mkstr[n] == (void*) s->body) {
+                    pos = n;
+                    break;
+                }
+
+            if (pos != LONG_MAX)
+                mkstr[pos] = NULL;
+
             realloc_body(s);
             continue;
         }

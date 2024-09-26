@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util.h"
 #include "list.h"
 
 typedef struct Dict {
@@ -37,6 +38,7 @@ typedef struct {
 
 static inline void* make_dict(void *parent) {
     Dict *r = malloc(sizeof(Dict));
+    add_str_ptr(mkstr, mkstr_qty, r);
     r->list = make_list();
     r->parent = parent;
     return r;
@@ -55,6 +57,7 @@ static inline void* dict_get(Dict *dict, char *key) {
 
 static inline void dict_put(Dict *dict, char *key, void *val) {
     DictEntry *e = malloc(sizeof(DictEntry));
+    add_str_ptr(mkstr, mkstr_qty, e);
     e->key = key;
     e->val = val;
     list_push(dict->list, e);
@@ -78,6 +81,14 @@ static inline List* dict_values(Dict *dict) {
 
 static inline void* dict_parent(Dict *dict) {
     void *r = dict->parent;
+
+    for (long n = 0; n < mkstr_qty; n++) {
+        if (mkstr[n] == dict->list)
+            mkstr[n] = NULL;
+        if (mkstr[n] == dict)
+            mkstr[n] = NULL;
+    }
+
     list_free(dict->list);
     free(dict->list);
     free(dict);
