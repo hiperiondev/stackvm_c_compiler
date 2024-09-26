@@ -31,8 +31,8 @@ extern long mkstr_qty;
 static void usage() {
     fprintf(stdout, "stackvm_c_compiler [options] filename\n"
             "OPTIONS\n"
-            "  -o filename            Write output to the specified file.\n"
-            "  --dump-ast             Dump abstract syntax tree(AST)\n");
+            "  -o filename    Write output to the specified file.\n"
+            "  --dump-ast     Dump abstract syntax tree(AST)\n");
 }
 
 static void print_usage_and_exit() {
@@ -70,10 +70,9 @@ static void parse_args(int argc, char **argv) {
                     print_usage_and_exit();
             }
         } else {
-            if (infile) {
-                // The second non-option argument is not what we expect.
+            if (infile)
                 print_usage_and_exit();
-            }
+
             infile = argv[0];
         }
     }
@@ -123,13 +122,17 @@ int main(int argc, char **argv) {
         }
     }
 
+    printf("\n---- data section ----\n");
+    emit_data_section();
+    printf("\n----------------------\n");
+
     for (long n = 0; n < mkstr_qty; n++) {
         if (mkstr[n] != NULL)
             free(mkstr[n]);
         mkstr[n] = NULL;
     }
-    free(mkstr);
 
+    free(mkstr);
     fclose(outfp);
 
     return 0;
