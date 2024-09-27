@@ -29,10 +29,6 @@ static list_t *functions = &list_empty;
 extern list_t *strings;
 extern list_t *flonums;
 
-void codegenir_pop_function(void *ignore UNUSED) {
-    list_pop(functions);
-}
-
 char* codegenir_get_caller_list(void) {
     string_t s = util_make_string();
     for (iter_t i = list_iter(functions); !list_iter_end(i);) {
@@ -53,13 +49,11 @@ void codegenir_emitf(int line, char *fmt, ...) {
         if (*p == '\t')
             col += TAB_LEN - 1;
 
-    //int space = (28 - col) > 0 ? (30 - col) : 2;
-    //fprintf(outfp, "%*c %s:%d\n", space, '#', codegenir_get_caller_list(), line);
     fprintf(outfp, "\n");
 }
 
 void codegenir_emit_data_section(void) {
-    SAVE();
+    //SAVE();
     codegenir_emit(".data");
     for (iter_t i = list_iter(strings); !list_iter_end(i);) {
         ast_t *v = list_iter_next(&i);
