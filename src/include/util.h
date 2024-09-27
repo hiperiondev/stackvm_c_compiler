@@ -24,7 +24,7 @@
             list[qty++] = (void*)(ptr);                    \
             list = realloc(list, (qty + 1) * sizeof(void*))
 
-#define error(...) errorf(__FILE__, __LINE__, __VA_ARGS__)
+#define error(...) util_errorf(__FILE__, __LINE__, __VA_ARGS__)
 
 #define assert(expr)                           \
     do {                                       \
@@ -44,14 +44,14 @@ typedef struct {
       int nalloc, len;
 } string_t;
 
-    void free_all(void);
-    void lfree(void *ptr);
-string_t make_string(void);
-    void realloc_body(string_t *s);
-   char* get_cstring(const string_t s);
-    void string_append(string_t *s, char c);
-    void string_appendf(string_t *s, char *fmt, ...);
-    void errorf(char *file, int line, char *fmt, ...);
-   char* quote_cstring(char *p);
+    void util_free_all(void);
+    void util_lfree(void *ptr);
+string_t util_make_string(void);
+    void util_realloc_body(string_t *s);
+   char* util_get_cstring(const string_t s);
+    void util_string_append(string_t *s, char c);
+    void util_string_appendf(string_t *s, char *fmt, ...);
+    void util_errorf(char *file, int line, char *fmt, ...);
+   char* util_quote_cstring(char *p);
 
 #endif /* UTIL_H */

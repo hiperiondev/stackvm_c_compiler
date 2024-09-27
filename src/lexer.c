@@ -21,6 +21,14 @@
 
 #include "c_stackvm.h"
 #include "lexer.h"
+#include "util.h"
+
+#define lexer_make_null(x)    lexer_make_token(TTYPE_NULL,   (uintptr_t) 0)
+#define lexer_make_strtok(x)  lexer_make_token(TTYPE_STRING, (uintptr_t) util_get_cstring(x))
+#define lexer_make_ident(x)   lexer_make_token(TTYPE_IDENT,  (uintptr_t) util_get_cstring(x))
+#define lexer_make_punct(x)   lexer_make_token(TTYPE_PUNCT,  (uintptr_t)(x))
+#define lexer_make_number(x)  lexer_make_token(TTYPE_NUMBER, (uintptr_t)(x))
+#define lexer_make_char(x)    lexer_make_token(TTYPE_CHAR,   (uintptr_t)(x))
 
 static bool ungotten = false;
 static token_t ungotten_buf = { 0 };
@@ -28,7 +36,7 @@ static token_t ungotten_buf = { 0 };
 extern void **mkstr;
 extern long mkstr_qty;
 
-token_t make_token(enum token_type type, uintptr_t data) {
+token_t lexer_make_token(enum token_type type, uintptr_t data) {
     token_t ret = {
             .type = type,
             .priv = data,
@@ -36,7 +44,7 @@ token_t make_token(enum token_type type, uintptr_t data) {
     return ret;
 }
 
-int getc_nonspace(void) {
+int lexer_getc_nonspace(void) {
     int c;
     while ((c = getc(stdin)) != EOF) {
         if (isspace(c) || c == '\n' || c == '\r')
@@ -46,21 +54,21 @@ int getc_nonspace(void) {
     return EOF;
 }
 
-token_t read_number(char c) {
-    string_t s = make_string();
+token_t lexer_read_number(char c) {
+    string_t s = util_make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
-    string_append(&s, c);
+    util_string_append(&s, c);
     while (1) {
         int c = getc(stdin);
         if (!isdigit(c) && !isalpha(c) && c != '.') {
             ungetc(c, stdin);
-            return make_number(get_cstring(s));
+            return lexer_make_number(util_get_cstring(s));
         }
-        string_append(&s, c);
+        util_string_append(&s, c);
     }
 }
 
-token_t read_char(void) {
+token_t lexer_read_char(void) {
     char c = getc(stdin);
     if (c == EOF)
         goto err;
@@ -74,14 +82,14 @@ token_t read_char(void) {
         goto err;
     if (c2 != '\'')
         error("Malformed char literal");
-    return make_char(c);
+    return lexer_make_char(c);
 err:
     error("Unterminated char");
-    return make_null(); /* non-reachable */
+    return lexer_make_null(); /* non-reachable */
 }
 
-token_t read_string(void) {
-    string_t s = make_string();
+token_t lexer_read_string(void) {
+    string_t s = util_make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     while (1) {
         int c = getc(stdin);
@@ -103,27 +111,27 @@ token_t read_string(void) {
                     error("Unknown quote: %c", c);
             }
         }
-        string_append(&s, c);
+        util_string_append(&s, c);
     }
-    return make_strtok(s);
+    return lexer_make_strtok(s);
 }
 
-token_t read_ident(char c) {
-    string_t s = make_string();
+token_t lexer_read_ident(char c) {
+    string_t s = util_make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
-    string_append(&s, c);
+    util_string_append(&s, c);
     while (1) {
         int c2 = getc(stdin);
         if (isalnum(c2) || c2 == '_') {
-            string_append(&s, c2);
+            util_string_append(&s, c2);
         } else {
             ungetc(c2, stdin);
-            return make_ident(s);
+            return lexer_make_ident(s);
         }
     }
 }
 
-void skip_line_comment(void) {
+void lexer_skip_line_comment(void) {
     while (1) {
         int c = getc(stdin);
         if (c == '\n' || c == EOF)
@@ -131,7 +139,7 @@ void skip_line_comment(void) {
     }
 }
 
-void skip_block_comment(void) {
+void lexer_skip_block_comment(void) {
     enum {
         in_comment, asterisk_read
     } state = in_comment;
@@ -146,35 +154,35 @@ void skip_block_comment(void) {
     }
 }
 
-token_t read_rep(int expect, int t1, int t2) {
+token_t lexer_read_rep(int expect, int t1, int t2) {
     int c = getc(stdin);
     if (c == expect)
-        return make_punct(t2);
+        return lexer_make_punct(t2);
     ungetc(c, stdin);
-    return make_punct(t1);
+    return lexer_make_punct(t1);
 }
 
-token_t read_token_int(void) {
-    int c = getc_nonspace();
+token_t lexer_read_token_int(void) {
+    int c = lexer_getc_nonspace();
     switch (c) {
         case '0' ... '9':
-            return read_number(c);
+            return lexer_read_number(c);
         case 'a' ... 'z':
         case 'A' ... 'Z':
         case '_':
-            return read_ident(c);
+            return lexer_read_ident(c);
         case '/': {
             c = getc(stdin);
             if (c == '/') {
-                skip_line_comment();
-                return read_token_int();
+                lexer_skip_line_comment();
+                return lexer_read_token_int();
             }
             if (c == '*') {
-                skip_block_comment();
-                return read_token_int();
+                lexer_skip_block_comment();
+                return lexer_read_token_int();
             }
             ungetc(c, stdin);
-            return make_punct('/');
+            return lexer_make_punct('/');
         }
         case '*':
         case '(':
@@ -189,62 +197,62 @@ token_t read_token_int(void) {
         case '!':
         case '?':
         case ':':
-            return make_punct(c);
+            return lexer_make_punct(c);
         case '-':
             c = getc(stdin);
             if (c == '-')
-                return make_punct(PUNCT_DEC);
+                return lexer_make_punct(PUNCT_DEC);
             if (c == '>')
-                return make_punct(PUNCT_ARROW);
+                return lexer_make_punct(PUNCT_ARROW);
             ungetc(c, stdin);
-            return make_punct('-');
+            return lexer_make_punct('-');
         case '=':
-            return read_rep('=', '=', PUNCT_EQ);
+            return lexer_read_rep('=', '=', PUNCT_EQ);
         case '+':
-            return read_rep('+', '+', PUNCT_INC);
+            return lexer_read_rep('+', '+', PUNCT_INC);
         case '&':
-            return read_rep('&', '&', PUNCT_LOGAND);
+            return lexer_read_rep('&', '&', PUNCT_LOGAND);
         case '|':
-            return read_rep('|', '|', PUNCT_LOGOR);
+            return lexer_read_rep('|', '|', PUNCT_LOGOR);
         case '<':
-            return read_rep('<', '<', PUNCT_LSHIFT);
+            return lexer_read_rep('<', '<', PUNCT_LSHIFT);
         case '>':
-            return read_rep('>', '>', PUNCT_RSHIFT);
+            return lexer_read_rep('>', '>', PUNCT_RSHIFT);
         case '"':
-            return read_string();
+            return lexer_read_string();
         case '\'':
-            return read_char();
+            return lexer_read_char();
         case EOF:
-            return make_null();
+            return lexer_make_null();
         default:
             error("Unexpected character: '%c'", c);
-            return make_null(); /* non-reachable */
+            return lexer_make_null(); /* non-reachable */
     }
 }
 
-bool is_punct(const token_t tok, int c) {
+bool lexer_is_punct(const token_t tok, int c) {
     return (get_ttype(tok) == TTYPE_PUNCT) && (get_punct(tok) == c);
 }
 
-void unget_token(const token_t tok) {
+void lexer_unget_token(const token_t tok) {
     if (get_ttype(tok) == TTYPE_NULL)
         return;
     if (ungotten)
         error("Push back buffer is already full");
     ungotten = true;
-    ungotten_buf = make_token(tok.type, tok.priv);
+    ungotten_buf = lexer_make_token(tok.type, tok.priv);
 }
 
-token_t peek_token(void) {
-    token_t tok = read_token();
-    unget_token(tok);
+token_t lexer_peek_token(void) {
+    token_t tok = lexer_read_token();
+    lexer_unget_token(tok);
     return tok;
 }
 
-token_t read_token(void) {
+token_t lexer_read_token(void) {
     if (ungotten) {
         ungotten = false;
-        return make_token(ungotten_buf.type, ungotten_buf.priv);
+        return lexer_make_token(ungotten_buf.type, ungotten_buf.priv);
     }
-    return read_token_int();
+    return lexer_read_token_int();
 }

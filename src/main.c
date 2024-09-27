@@ -22,7 +22,7 @@
 
 #include "util.h"
 #include "c_stackvm.h"
-#include "codegen_ir.h"
+#include "codegenir.h"
 #include "parser.h"
 #include "verbose.h"
 
@@ -110,26 +110,26 @@ int main(int argc, char **argv) {
     open_output_file();
     mkstr = malloc(sizeof(void*));
 
-    list_t *toplevels = read_toplevels();
+    list_t *toplevels = parser_read_toplevels();
     if (!dump_ast)
-        emit_data_section();
+        codegenir_emit_data_section();
 
-    for (iter_t i = list_iter(toplevels); !iter_end(i);) {
-        ast_t *v = iter_next(&i);
+    for (iter_t i = list_iter(toplevels); !list_iter_end(i);) {
+        ast_t *v = list_iter_next(&i);
         if (dump_ast) {
             char *aststr = ast_to_string(v, true);
             printf("%s \n", aststr);
-            lfree(aststr);
+            util_lfree(aststr);
         } else {
-            emit_toplevel(v);
+            codegenir_emit_toplevel(v);
         }
     }
 
     printf("\n---- data section ----\n");
-    emit_data_section();
+    codegenir_emit_data_section();
     printf("\n----------------------\n");
 
-    free_all();
+    util_free_all();
 
     free(mkstr);
     fclose(outfp);

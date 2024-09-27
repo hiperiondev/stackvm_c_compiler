@@ -25,18 +25,18 @@
 extern void **mkstr;
 extern long mkstr_qty;
 
-void* make_dict(void *parent) {
+void* dict_make(void *parent) {
     dict_t *r = malloc(sizeof(dict_t));
     add_str_ptr(mkstr, mkstr_qty, r);
-    r->list = make_list();
+    r->list = list_make();
     r->parent = parent;
     return r;
 }
 
 void* dict_get(dict_t *dict, char *key) {
     for (; dict; dict = dict->parent) {
-        for (iter_t i = list_iter(dict->list); !iter_end(i);) {
-            dict_entry_t *e = iter_next(&i);
+        for (iter_t i = list_iter(dict->list); !list_iter_end(i);) {
+            dict_entry_t *e = list_iter_next(&i);
             if (!strcmp(key, e->key))
                 return e->val;
         }
@@ -53,18 +53,18 @@ void dict_put(dict_t *dict, char *key, void *val) {
 }
 
 list_t* dict_keys(dict_t *dict) {
-    list_t *r = make_list();
+    list_t *r = list_make();
     for (; dict; dict = dict->parent)
-        for (iter_t i = list_iter(dict->list); !iter_end(i);)
-            list_push(r, ((dict_entry_t*) iter_next(&i))->key);
+        for (iter_t i = list_iter(dict->list); !list_iter_end(i);)
+            list_push(r, ((dict_entry_t*) list_iter_next(&i))->key);
     return r;
 }
 
 list_t* dict_values(dict_t *dict) {
-    list_t *r = make_list();
+    list_t *r = list_make();
     for (; dict; dict = dict->parent)
-        for (iter_t i = list_iter(dict->list); !iter_end(i);)
-            list_push(r, ((dict_entry_t*) iter_next(&i))->val);
+        for (iter_t i = list_iter(dict->list); !list_iter_end(i);)
+            list_push(r, ((dict_entry_t*) list_iter_next(&i))->val);
     return r;
 }
 

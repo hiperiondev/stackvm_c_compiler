@@ -40,14 +40,14 @@ typedef struct {
     list_node_t *ptr;
 } iter_t;
 
-list_t* make_list(void);
-  void* make_node(void *elem);
+list_t* list_make(void);
+  void* list_make_node(void *elem);
    void list_push(list_t *list, void *elem);
   void* list_pop(list_t *list);
    void list_unshift(list_t *list, void *elem);
  iter_t list_iter(void *ptr);
-   bool iter_end(const iter_t iter);
-  void* iter_next(iter_t *iter);
+   bool list_iter_end(const iter_t iter);
+  void* list_iter_next(iter_t *iter);
 list_t* list_reverse(list_t *list);
     int list_len(list_t *list);
    void list_free(list_t *list);

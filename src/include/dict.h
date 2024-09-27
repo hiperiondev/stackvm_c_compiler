@@ -32,7 +32,7 @@ typedef struct {
     void *val;
 } dict_entry_t;
 
-  void* make_dict(void *parent);
+  void* dict_make(void *parent);
   void* dict_get(dict_t *dict, char *key);
    void dict_put(dict_t *dict, char *key, void *val);
 list_t* dict_keys(dict_t *dict);

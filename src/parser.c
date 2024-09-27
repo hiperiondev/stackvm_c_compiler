@@ -52,7 +52,7 @@ static ctype_t *ctype_double = &(ctype_t ) { CTYPE_DOUBLE, 8, NULL };
 #endif
 static int labelseq = 0;
 
-ast_t* ast_uop(int type, ctype_t *ctype, ast_t *operand) {
+ast_t* parser_ast_uop(int type, ctype_t *ctype, ast_t *operand) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
@@ -61,12 +61,12 @@ ast_t* ast_uop(int type, ctype_t *ctype, ast_t *operand) {
     return r;
 }
 
-ast_t* ast_binop(int type, ast_t *left, ast_t *right) {
+ast_t* parser_ast_binop(int type, ast_t *left, ast_t *right) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
-    r->ctype = result_type(type, left->ctype, right->ctype);
-    if (type != '=' && convert_array(left->ctype)->type != CTYPE_PTR && convert_array(right->ctype)->type == CTYPE_PTR) {
+    r->ctype = parser_result_type(type, left->ctype, right->ctype);
+    if (type != '=' && parser_convert_array(left->ctype)->type != CTYPE_PTR && parser_convert_array(right->ctype)->type == CTYPE_PTR) {
         r->left = right;
         r->right = left;
     } else {
@@ -76,7 +76,7 @@ ast_t* ast_binop(int type, ast_t *left, ast_t *right) {
     return r;
 }
 
-ast_t* ast_inttype(ctype_t *ctype, long val) {
+ast_t* parser_ast_inttype(ctype_t *ctype, long val) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
@@ -85,7 +85,7 @@ ast_t* ast_inttype(ctype_t *ctype, long val) {
     return r;
 }
 
-ast_t* ast_double(double val) {
+ast_t* parser_ast_double(double val) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
@@ -99,14 +99,14 @@ ast_t* ast_double(double val) {
     return r;
 }
 
-char* make_label(void) {
-    string_t s = make_string();
+char* parser_make_label(void) {
+    string_t s = util_make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
-    string_appendf(&s, ".L%d", labelseq++);
-    return get_cstring(s);
+    util_string_appendf(&s, ".L%d", labelseq++);
+    return util_get_cstring(s);
 }
 
-ast_t* ast_lvar(ctype_t *ctype, char *name) {
+ast_t* parser_ast_lvar(ctype_t *ctype, char *name) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LVAR;
@@ -118,28 +118,28 @@ ast_t* ast_lvar(ctype_t *ctype, char *name) {
     return r;
 }
 
-ast_t* ast_gvar(ctype_t *ctype, char *name, bool filelocal) {
+ast_t* parser_ast_gvar(ctype_t *ctype, char *name, bool filelocal) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_GVAR;
     r->ctype = ctype;
     r->varname = name;
-    r->glabel = filelocal ? make_label() : name;
+    r->glabel = filelocal ? parser_make_label() : name;
     dict_put(globalenv, name, r);
     return r;
 }
 
-ast_t* ast_string(char *str) {
+ast_t* parser_ast_string(char *str) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRING;
-    r->ctype = make_array_type(ctype_char, strlen(str) + 1);
+    r->ctype = parser_make_array_type(ctype_char, strlen(str) + 1);
     r->sval = str;
-    r->slabel = make_label();
+    r->slabel = parser_make_label();
     return r;
 }
 
-ast_t* ast_funcall(ctype_t *ctype, char *fname, list_t *args) {
+ast_t* parser_ast_funcall(ctype_t *ctype, char *fname, list_t *args) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNCALL;
@@ -149,7 +149,7 @@ ast_t* ast_funcall(ctype_t *ctype, char *fname, list_t *args) {
     return r;
 }
 
-ast_t* ast_func(ctype_t *rettype, char *fname, list_t *params, ast_t *body, list_t *localvars) {
+ast_t* parser_ast_func(ctype_t *rettype, char *fname, list_t *params, ast_t *body, list_t *localvars) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNC;
@@ -161,7 +161,7 @@ ast_t* ast_func(ctype_t *rettype, char *fname, list_t *params, ast_t *body, list
     return r;
 }
 
-ast_t* ast_decl(ast_t *var, ast_t *init) {
+ast_t* parser_ast_decl(ast_t *var, ast_t *init) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_DECL;
@@ -171,7 +171,7 @@ ast_t* ast_decl(ast_t *var, ast_t *init) {
     return r;
 }
 
-ast_t* ast_array_init(list_t *arrayinit) {
+ast_t* parser_ast_array_init(list_t *arrayinit) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_ARRAY_INIT;
@@ -180,7 +180,7 @@ ast_t* ast_array_init(list_t *arrayinit) {
     return r;
 }
 
-ast_t* ast_if(ast_t *cond, ast_t *then, ast_t *els) {
+ast_t* parser_ast_if(ast_t *cond, ast_t *then, ast_t *els) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_IF;
@@ -191,7 +191,7 @@ ast_t* ast_if(ast_t *cond, ast_t *then, ast_t *els) {
     return r;
 }
 
-ast_t* ast_ternary(ctype_t *ctype, ast_t *cond, ast_t *then, ast_t *els) {
+ast_t* parser_ast_ternary(ctype_t *ctype, ast_t *cond, ast_t *then, ast_t *els) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_TERNARY;
@@ -202,7 +202,7 @@ ast_t* ast_ternary(ctype_t *ctype, ast_t *cond, ast_t *then, ast_t *els) {
     return r;
 }
 
-ast_t* ast_for(ast_t *init, ast_t *cond, ast_t *step, ast_t *body) {
+ast_t* parser_ast_for(ast_t *init, ast_t *cond, ast_t *step, ast_t *body) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FOR;
@@ -214,7 +214,7 @@ ast_t* ast_for(ast_t *init, ast_t *cond, ast_t *step, ast_t *body) {
     return r;
 }
 
-ast_t* ast_return(ast_t *retval) {
+ast_t* parser_ast_return(ast_t *retval) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_RETURN;
@@ -223,7 +223,7 @@ ast_t* ast_return(ast_t *retval) {
     return r;
 }
 
-ast_t* ast_compound_stmt(list_t *stmts) {
+ast_t* parser_ast_compound_stmt(list_t *stmts) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_COMPOUND_STMT;
@@ -232,7 +232,7 @@ ast_t* ast_compound_stmt(list_t *stmts) {
     return r;
 }
 
-ast_t* ast_struct_ref(ctype_t *ctype, ast_t *struc, char *name) {
+ast_t* parser_ast_struct_ref(ctype_t *ctype, ast_t *struc, char *name) {
     ast_t *r = malloc(sizeof(ast_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRUCT_REF;
@@ -242,7 +242,7 @@ ast_t* ast_struct_ref(ctype_t *ctype, ast_t *struc, char *name) {
     return r;
 }
 
-ctype_t* make_ptr_type(ctype_t *ctype) {
+ctype_t* parser_make_ptr_type(ctype_t *ctype) {
     ctype_t *r = malloc(sizeof(ctype_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_PTR;
@@ -252,7 +252,7 @@ ctype_t* make_ptr_type(ctype_t *ctype) {
     return r;
 }
 
-ctype_t* make_array_type(ctype_t *ctype, int len) {
+ctype_t* parser_make_array_type(ctype_t *ctype, int len) {
     ctype_t *r = malloc(sizeof(ctype_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_ARRAY;
@@ -263,7 +263,7 @@ ctype_t* make_array_type(ctype_t *ctype, int len) {
     return r;
 }
 
-ctype_t* make_struct_field_type(ctype_t *ctype, int offset) {
+ctype_t* parser_make_struct_field_type(ctype_t *ctype, int offset) {
     ctype_t *r = malloc(sizeof(ctype_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     memcpy(r, ctype, sizeof(ctype_t));
@@ -272,7 +272,7 @@ ctype_t* make_struct_field_type(ctype_t *ctype, int offset) {
     return r;
 }
 
-ctype_t* make_struct_type(dict_t *fields, int size) {
+ctype_t* parser_make_struct_type(dict_t *fields, int size) {
     ctype_t *r = malloc(sizeof(ctype_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_STRUCT;
@@ -282,11 +282,11 @@ ctype_t* make_struct_type(dict_t *fields, int size) {
     return r;
 }
 
-bool is_inttype(ctype_t *ctype) {
+bool parser_is_inttype(ctype_t *ctype) {
     return ctype->type == CTYPE_CHAR || ctype->type == CTYPE_INT || ctype->type == CTYPE_LONG;
 }
 
-bool is_flotype(ctype_t *ctype) {
+bool parser_is_flotype(ctype_t *ctype) {
 #ifdef ALLOW_DOUBLE
     return ctype->type == CTYPE_FLOAT || ctype->type == CTYPE_DOUBLE;
 #else
@@ -294,7 +294,7 @@ bool is_flotype(ctype_t *ctype) {
 #endif
 }
 
-void ensure_lvalue(ast_t *ast) {
+void parser_ensure_lvalue(ast_t *ast) {
     switch (ast->type) {
         case AST_LVAR:
         case AST_GVAR:
@@ -306,45 +306,45 @@ void ensure_lvalue(ast_t *ast) {
     }
 }
 
-void expect(char punct) {
-    token_t tok = read_token();
-    if (!is_punct(tok, punct))
+void parser_expect(char punct) {
+    token_t tok = lexer_read_token();
+    if (!lexer_is_punct(tok, punct))
         error("'%c' expected, but got %s", punct, token_to_string(tok));
 }
 
-bool is_ident(const token_t tok, char *s) {
+bool parser_is_ident(const token_t tok, char *s) {
     return get_ttype(tok) == TTYPE_IDENT && !strcmp(get_ident(tok), s);
 }
 
-bool is_right_assoc(const token_t tok) {
+bool parser_is_right_assoc(const token_t tok) {
     return get_punct(tok) == '=';
 }
 
-int eval_intexpr(ast_t *ast) {
+int parser_eval_intexpr(ast_t *ast) {
     switch (ast->type) {
         case AST_LITERAL:
-            if (is_inttype(ast->ctype))
+            if (parser_is_inttype(ast->ctype))
                 return ast->ival;
             error("Integer expression expected, but got %s", ast_to_string(ast, true));
         case '+':
-            return eval_intexpr(ast->left) + eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) + parser_eval_intexpr(ast->right);
         case '-':
-            return eval_intexpr(ast->left) - eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) - parser_eval_intexpr(ast->right);
         case '*':
-            return eval_intexpr(ast->left) * eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) * parser_eval_intexpr(ast->right);
         case '/':
-            return eval_intexpr(ast->left) / eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) / parser_eval_intexpr(ast->right);
         case PUNCT_LSHIFT:
-            return eval_intexpr(ast->left) << eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) << parser_eval_intexpr(ast->right);
         case PUNCT_RSHIFT:
-            return eval_intexpr(ast->left) >> eval_intexpr(ast->right);
+            return parser_eval_intexpr(ast->left) >> parser_eval_intexpr(ast->right);
         default:
             error("Integer expression expected, but got %s", ast_to_string(ast, true));
             return 0; /* non-reachable */
     }
 }
 
-int priority(const token_t tok) {
+int parser_priority(const token_t tok) {
     switch (get_punct(tok)) {
         case '[':
         case '.':
@@ -384,37 +384,37 @@ int priority(const token_t tok) {
     }
 }
 
-ast_t* read_func_args(char *fname) {
-    list_t *args = make_list();
+ast_t* parser_read_func_args(char *fname) {
+    list_t *args = list_make();
     while (1) {
-        token_t tok = read_token();
-        if (is_punct(tok, ')'))
+        token_t tok = lexer_read_token();
+        if (lexer_is_punct(tok, ')'))
             break;
-        unget_token(tok);
-        list_push(args, read_expr());
-        tok = read_token();
-        if (is_punct(tok, ')'))
+        lexer_unget_token(tok);
+        list_push(args, parser_read_expr());
+        tok = lexer_read_token();
+        if (lexer_is_punct(tok, ')'))
             break;
-        if (!is_punct(tok, ','))
+        if (!lexer_is_punct(tok, ','))
             error("Unexpected token: '%s'", token_to_string(tok));
     }
     if (MAX_ARGS < list_len(args))
         error("Too many arguments: %s", fname);
-    return ast_funcall(ctype_int, fname, args);
+    return parser_ast_funcall(ctype_int, fname, args);
 }
 
-ast_t* read_ident_or_func(char *name) {
-    token_t tok = read_token();
-    if (is_punct(tok, '('))
-        return read_func_args(name);
-    unget_token(tok);
+ast_t* parser_read_ident_or_func(char *name) {
+    token_t tok = lexer_read_token();
+    if (lexer_is_punct(tok, '('))
+        return parser_read_func_args(name);
+    lexer_unget_token(tok);
     ast_t *v = dict_get(localenv, name);
     if (!v)
         error("Undefined varaible: %s", name);
     return v;
 }
 
-bool is_long_token(char *p) {
+bool parser_is_long_token(char *p) {
     for (; *p; p++) {
         if (!isdigit(*p))
             return (*p == 'L' || *p == 'l') && p[1] == '\0';
@@ -422,14 +422,14 @@ bool is_long_token(char *p) {
     return false;
 }
 
-bool is_int_token(char *p) {
+bool parser_is_int_token(char *p) {
     for (; *p; p++)
         if (!isdigit(*p))
             return false;
     return true;
 }
 
-bool is_float_token(char *p) {
+bool parser_is_float_token(char *p) {
     for (; *p; p++)
         if (!isdigit(*p))
             break;
@@ -441,36 +441,36 @@ bool is_float_token(char *p) {
     return true;
 }
 
-ast_t* read_prim(void) {
-    token_t tok = read_token();
+ast_t* parser_read_prim(void) {
+    token_t tok = lexer_read_token();
     switch (get_ttype(tok)) {
         case TTYPE_NULL:
             return NULL;
         case TTYPE_IDENT:
-            return read_ident_or_func(get_ident(tok));
+            return parser_read_ident_or_func(get_ident(tok));
         case TTYPE_NUMBER: {
             char *number = get_number(tok);
-            if (is_long_token(number))
-                return ast_inttype(ctype_long, atol(number));
-            if (is_int_token(number)) {
+            if (parser_is_long_token(number))
+                return parser_ast_inttype(ctype_long, atol(number));
+            if (parser_is_int_token(number)) {
                 long val = atol(number);
                 if (val & ~(long) UINT_MAX)
-                    return ast_inttype(ctype_long, val);
-                return ast_inttype(ctype_int, val);
+                    return parser_ast_inttype(ctype_long, val);
+                return parser_ast_inttype(ctype_int, val);
             }
-            if (is_float_token(number))
-                return ast_double(atof(number));
+            if (parser_is_float_token(number))
+                return parser_ast_double(atof(number));
             error("Malformed number: %s", token_to_string(tok));
         }
         case TTYPE_CHAR:
-            return ast_inttype(ctype_char, get_char(tok));
+            return parser_ast_inttype(ctype_char, get_char(tok));
         case TTYPE_STRING: {
-            ast_t *r = ast_string(get_strtok(tok));
+            ast_t *r = parser_ast_string(get_strtok(tok));
             list_push(strings, r);
             return r;
         }
         case TTYPE_PUNCT:
-            unget_token(tok);
+            lexer_unget_token(tok);
             return NULL;
         default:
             error("internal error: unknown token type: %d", get_ttype(tok));
@@ -478,7 +478,7 @@ ast_t* read_prim(void) {
     }
 }
 
-ctype_t* result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b) {
+ctype_t* parser_result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b) {
     if (a->type > b->type)
         swap(a, b);
     if (b->type == CTYPE_PTR) {
@@ -486,7 +486,7 @@ ctype_t* result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b) {
             return a;
         if (op != '+' && op != '-')
             goto err;
-        if (!is_inttype(a))
+        if (!parser_is_inttype(a))
             goto err;
         return b;
     }
@@ -546,7 +546,7 @@ ctype_t* result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b) {
         case CTYPE_ARRAY:
             if (b->type != CTYPE_ARRAY)
                 goto err;
-            return result_type_int(jmpbuf, op, a->ptr, b->ptr);
+            return parser_result_type_int(jmpbuf, op, a->ptr, b->ptr);
         default:
             error("internal error: %s %s", ctype_to_string(a), ctype_to_string(b));
     }
@@ -554,136 +554,136 @@ err:
     longjmp(*jmpbuf, 1);
 }
 
-ast_t* read_subscript_expr(ast_t *ast) {
-    ast_t *sub = read_expr();
-    expect(']');
-    ast_t *t = ast_binop('+', ast, sub);
-    return ast_uop(AST_DEREF, t->ctype->ptr, t);
+ast_t* parser_read_subscript_expr(ast_t *ast) {
+    ast_t *sub = parser_read_expr();
+    parser_expect(']');
+    ast_t *t = parser_ast_binop('+', ast, sub);
+    return parser_ast_uop(AST_DEREF, t->ctype->ptr, t);
 }
 
-ctype_t* convert_array(ctype_t *ctype) {
+ctype_t* parser_convert_array(ctype_t *ctype) {
     if (ctype->type != CTYPE_ARRAY)
         return ctype;
-    return make_ptr_type(ctype->ptr);
+    return parser_make_ptr_type(ctype->ptr);
 }
 
-ctype_t* result_type(char op, ctype_t *a, ctype_t *b) {
+ctype_t* parser_result_type(char op, ctype_t *a, ctype_t *b) {
     jmp_buf jmpbuf;
     if (setjmp(jmpbuf) == 0)
-        return result_type_int(&jmpbuf, op, convert_array(a), convert_array(b));
+        return parser_result_type_int(&jmpbuf, op, parser_convert_array(a), parser_convert_array(b));
     error("incompatible operands: %c: <%s> and <%s>", op, ctype_to_string(a), ctype_to_string(b));
     return NULL; /* non-reachable */
 }
 
-ast_t* read_unary_expr(void) {
-    token_t tok = read_token();
+ast_t* parser_read_unary_expr(void) {
+    token_t tok = lexer_read_token();
     if (get_ttype(tok) != TTYPE_PUNCT) {
-        unget_token(tok);
-        return read_prim();
+        lexer_unget_token(tok);
+        return parser_read_prim();
     }
-    if (is_punct(tok, '(')) {
-        ast_t *r = read_expr();
-        expect(')');
+    if (lexer_is_punct(tok, '(')) {
+        ast_t *r = parser_read_expr();
+        parser_expect(')');
         return r;
     }
-    if (is_punct(tok, '&')) {
-        ast_t *operand = read_unary_expr();
-        ensure_lvalue(operand);
-        return ast_uop(AST_ADDR, make_ptr_type(operand->ctype), operand);
+    if (lexer_is_punct(tok, '&')) {
+        ast_t *operand = parser_read_unary_expr();
+        parser_ensure_lvalue(operand);
+        return parser_ast_uop(AST_ADDR, parser_make_ptr_type(operand->ctype), operand);
     }
-    if (is_punct(tok, '!')) {
-        ast_t *operand = read_unary_expr();
-        return ast_uop('!', ctype_int, operand);
+    if (lexer_is_punct(tok, '!')) {
+        ast_t *operand = parser_read_unary_expr();
+        return parser_ast_uop('!', ctype_int, operand);
     }
-    if (is_punct(tok, '*')) {
-        ast_t *operand = read_unary_expr();
-        ctype_t *ctype = convert_array(operand->ctype);
+    if (lexer_is_punct(tok, '*')) {
+        ast_t *operand = parser_read_unary_expr();
+        ctype_t *ctype = parser_convert_array(operand->ctype);
         if (ctype->type != CTYPE_PTR)
             error("pointer type expected, but got %s", ast_to_string(operand, true));
         if (ctype->ptr == ctype_void)
             error("pointer to void can not be dereferenced, but got %s", ast_to_string(operand, true));
-        return ast_uop(AST_DEREF, operand->ctype->ptr, operand);
+        return parser_ast_uop(AST_DEREF, operand->ctype->ptr, operand);
     }
-    unget_token(tok);
-    return read_prim();
+    lexer_unget_token(tok);
+    return parser_read_prim();
 }
 
-ast_t* read_cond_expr(ast_t *cond) {
-    ast_t *then = read_expr();
-    expect(':');
-    ast_t *els = read_expr();
-    return ast_ternary(then->ctype, cond, then, els);
+ast_t* parser_read_cond_expr(ast_t *cond) {
+    ast_t *then = parser_read_expr();
+    parser_expect(':');
+    ast_t *els = parser_read_expr();
+    return parser_ast_ternary(then->ctype, cond, then, els);
 }
 
-ast_t* read_struct_field(ast_t *struc) {
+ast_t* parser_read_struct_field(ast_t *struc) {
     if (struc->ctype->type != CTYPE_STRUCT)
         error("struct expected, but got %s", ast_to_string(struc, true));
-    token_t name = read_token();
+    token_t name = lexer_read_token();
     if (get_ttype(name) != TTYPE_IDENT)
         error("field name expected, but got %s", token_to_string(name));
     char *ident = get_ident(name);
     ctype_t *field = dict_get(struc->ctype->fields, ident);
-    return ast_struct_ref(field, struc, ident);
+    return parser_ast_struct_ref(field, struc, ident);
 }
 
-ast_t* read_expr_int(int prec) {
-    ast_t *ast = read_unary_expr();
+ast_t* parser_read_expr_int(int prec) {
+    ast_t *ast = parser_read_unary_expr();
     if (!ast)
         return NULL;
     while (1) {
-        token_t tok = read_token();
+        token_t tok = lexer_read_token();
         if (get_ttype(tok) != TTYPE_PUNCT) {
-            unget_token(tok);
+            lexer_unget_token(tok);
             return ast;
         }
-        int prec2 = priority(tok);
+        int prec2 = parser_priority(tok);
         if (prec2 < 0 || prec <= prec2) {
-            unget_token(tok);
+            lexer_unget_token(tok);
             return ast;
         }
-        if (is_punct(tok, '?')) {
-            ast = read_cond_expr(ast);
+        if (lexer_is_punct(tok, '?')) {
+            ast = parser_read_cond_expr(ast);
             continue;
         }
-        if (is_punct(tok, '.')) {
-            ast = read_struct_field(ast);
+        if (lexer_is_punct(tok, '.')) {
+            ast = parser_read_struct_field(ast);
             continue;
         }
-        if (is_punct(tok, PUNCT_ARROW)) {
+        if (lexer_is_punct(tok, PUNCT_ARROW)) {
             if (ast->ctype->type != CTYPE_PTR)
                 error("pointer type expected, but got %s %s", ctype_to_string(ast->ctype), ast_to_string(ast, true));
-            ast = ast_uop(AST_DEREF, ast->ctype->ptr, ast);
-            ast = read_struct_field(ast);
+            ast = parser_ast_uop(AST_DEREF, ast->ctype->ptr, ast);
+            ast = parser_read_struct_field(ast);
             continue;
         }
-        if (is_punct(tok, '[')) {
-            ast = read_subscript_expr(ast);
+        if (lexer_is_punct(tok, '[')) {
+            ast = parser_read_subscript_expr(ast);
             continue;
         }
         // this is BUG!! ++ should be in read_unary_expr() , I think.
-        if (is_punct(tok, PUNCT_INC) || is_punct(tok, PUNCT_DEC)) {
-            ensure_lvalue(ast);
-            ast = ast_uop(get_punct(tok), ast->ctype, ast);
+        if (lexer_is_punct(tok, PUNCT_INC) || lexer_is_punct(tok, PUNCT_DEC)) {
+            parser_ensure_lvalue(ast);
+            ast = parser_ast_uop(get_punct(tok), ast->ctype, ast);
             continue;
         }
-        if (is_punct(tok, '='))
-            ensure_lvalue(ast);
-        ast_t *rest = read_expr_int(prec2 + (is_right_assoc(tok) ? 1 : 0));
+        if (lexer_is_punct(tok, '='))
+            parser_ensure_lvalue(ast);
+        ast_t *rest = parser_read_expr_int(prec2 + (parser_is_right_assoc(tok) ? 1 : 0));
         if (!rest)
             error("second operand missing");
-        if (is_punct(tok, PUNCT_LSHIFT) || is_punct(tok, PUNCT_RSHIFT)) {
+        if (lexer_is_punct(tok, PUNCT_LSHIFT) || lexer_is_punct(tok, PUNCT_RSHIFT)) {
             if ((ast->ctype != ctype_int && ast->ctype != ctype_char) || (rest->ctype != ctype_int && rest->ctype != ctype_char))
                 error("invalid operand to shift");
         }
-        ast = ast_binop(get_punct(tok), ast, rest);
+        ast = parser_ast_binop(get_punct(tok), ast, rest);
     }
 }
 
-ast_t* read_expr(void) {
-    return read_expr_int(MAX_OP_PRIO);
+ast_t* parser_read_expr(void) {
+    return parser_read_expr_int(MAX_OP_PRIO);
 }
 
-ctype_t* get_ctype(const token_t tok) {
+ctype_t* parser_get_ctype(const token_t tok) {
     if (get_ttype(tok) != TTYPE_IDENT)
         return NULL;
     char *ident = get_ident(tok);
@@ -704,111 +704,111 @@ ctype_t* get_ctype(const token_t tok) {
     return NULL;
 }
 
-bool is_type_keyword(const token_t tok) {
-    return get_ctype(tok) || is_ident(tok, "struct") || is_ident(tok, "union");
+bool parser_is_type_keyword(const token_t tok) {
+    return parser_get_ctype(tok) || parser_is_ident(tok, "struct") || parser_is_ident(tok, "union");
 }
 
-ast_t* read_decl_array_init_int(ctype_t *ctype) {
-    token_t tok = read_token();
+ast_t* parser_read_decl_array_init_int(ctype_t *ctype) {
+    token_t tok = lexer_read_token();
     if (ctype->ptr->type == CTYPE_CHAR && get_ttype(tok) == TTYPE_STRING)
-        return ast_string(get_strtok(tok));
-    if (!is_punct(tok, '{'))
+        return parser_ast_string(get_strtok(tok));
+    if (!lexer_is_punct(tok, '{'))
         error("Expected an initializer list for %s, but got %s", ctype_to_string(ctype), token_to_string(tok));
-    list_t *initlist = make_list();
+    list_t *initlist = list_make();
     while (1) {
-        token_t tok = read_token();
-        if (is_punct(tok, '}'))
+        token_t tok = lexer_read_token();
+        if (lexer_is_punct(tok, '}'))
             break;
-        unget_token(tok);
-        ast_t *init = read_expr();
+        lexer_unget_token(tok);
+        ast_t *init = parser_read_expr();
         list_push(initlist, init);
-        result_type('=', init->ctype, ctype->ptr);
-        tok = read_token();
-        if (!is_punct(tok, ','))
-            unget_token(tok);
+        parser_result_type('=', init->ctype, ctype->ptr);
+        tok = lexer_read_token();
+        if (!lexer_is_punct(tok, ','))
+            lexer_unget_token(tok);
     }
-    return ast_array_init(initlist);
+    return parser_ast_array_init(initlist);
 }
 
-char* read_struct_union_tag(void) {
-    token_t tok = read_token();
+char* parser_read_struct_union_tag(void) {
+    token_t tok = lexer_read_token();
     if (get_ttype(tok) == TTYPE_IDENT)
         return get_ident(tok);
-    unget_token(tok);
+    lexer_unget_token(tok);
     return NULL;
 }
 
-dict_t* read_struct_union_fields(void) {
-    dict_t *r = make_dict(NULL);
-    expect('{');
+dict_t* parser_read_struct_union_fields(void) {
+    dict_t *r = dict_make(NULL);
+    parser_expect('{');
     while (1) {
-        if (!is_type_keyword(peek_token()))
+        if (!parser_is_type_keyword(lexer_peek_token()))
             break;
         token_t name;
-        ctype_t *fieldtype = read_decl_int(&name);
-        dict_put(r, get_ident(name), make_struct_field_type(fieldtype, 0));
-        expect(';');
+        ctype_t *fieldtype = parser_read_decl_int(&name);
+        dict_put(r, get_ident(name), parser_make_struct_field_type(fieldtype, 0));
+        parser_expect(';');
     }
-    expect('}');
+    parser_expect('}');
     return r;
 }
 
-ctype_t* read_union_def(void) {
-    char *tag = read_struct_union_tag();
+ctype_t* parser_read_union_def(void) {
+    char *tag = parser_read_struct_union_tag();
     ctype_t *ctype = dict_get(union_defs, tag);
     if (ctype)
         return ctype;
-    dict_t *fields = read_struct_union_fields();
+    dict_t *fields = parser_read_struct_union_fields();
     int maxsize = 0;
-    for (iter_t i = list_iter(dict_values(fields)); !iter_end(i);) {
-        ctype_t *fieldtype = iter_next(&i);
+    for (iter_t i = list_iter(dict_values(fields)); !list_iter_end(i);) {
+        ctype_t *fieldtype = list_iter_next(&i);
         maxsize = (maxsize < fieldtype->size) ? fieldtype->size : maxsize;
     }
-    ctype_t *r = make_struct_type(fields, maxsize);
+    ctype_t *r = parser_make_struct_type(fields, maxsize);
     if (tag)
         dict_put(union_defs, tag, r);
     return r;
 }
 
-ctype_t* read_struct_def(void) {
-    char *tag = read_struct_union_tag();
+ctype_t* parser_read_struct_def(void) {
+    char *tag = parser_read_struct_union_tag();
     ctype_t *ctype = dict_get(struct_defs, tag);
     if (ctype)
         return ctype;
-    dict_t *fields = read_struct_union_fields();
+    dict_t *fields = parser_read_struct_union_fields();
     int offset = 0;
-    for (iter_t i = list_iter(dict_values(fields)); !iter_end(i);) {
-        ctype_t *fieldtype = iter_next(&i);
+    for (iter_t i = list_iter(dict_values(fields)); !list_iter_end(i);) {
+        ctype_t *fieldtype = list_iter_next(&i);
         int size = (fieldtype->size < MAX_ALIGN) ? fieldtype->size : MAX_ALIGN;
         if (offset % size != 0)
             offset += size - offset % size;
         fieldtype->offset = offset;
         offset += fieldtype->size;
     }
-    ctype_t *r = make_struct_type(fields, offset);
+    ctype_t *r = parser_make_struct_type(fields, offset);
     if (tag)
         dict_put(struct_defs, tag, r);
     return r;
 }
 
-ctype_t* read_decl_spec(void) {
-    token_t tok = read_token();
-    ctype_t *ctype = is_ident(tok, "struct") ? read_struct_def() : is_ident(tok, "union") ? read_union_def() : get_ctype(tok);
+ctype_t* parser_read_decl_spec(void) {
+    token_t tok = lexer_read_token();
+    ctype_t *ctype = parser_is_ident(tok, "struct") ? parser_read_struct_def() : parser_is_ident(tok, "union") ? parser_read_union_def() : parser_get_ctype(tok);
     if (!ctype)
         error("Type expected, but got %s", token_to_string(tok));
     while (1) {
-        tok = read_token();
-        if (!is_punct(tok, '*')) {
-            unget_token(tok);
+        tok = lexer_read_token();
+        if (!lexer_is_punct(tok, '*')) {
+            lexer_unget_token(tok);
             return ctype;
         }
-        ctype = make_ptr_type(ctype);
+        ctype = parser_make_ptr_type(ctype);
     }
 }
 
-ast_t* read_decl_init_val(ast_t *var) {
+ast_t* parser_read_decl_init_val(ast_t *var) {
     if (var->ctype->type == CTYPE_ARRAY) {
-        ast_t *init = read_decl_array_init_int(var->ctype);
+        ast_t *init = parser_read_decl_array_init_int(var->ctype);
         int len = (init->type == AST_STRING) ? strlen(init->sval) + 1 : list_len(init->arrayinit);
         if (var->ctype->len == -1) {
             var->ctype->len = len;
@@ -816,232 +816,232 @@ ast_t* read_decl_init_val(ast_t *var) {
         } else if (var->ctype->len != len) {
             error("Invalid array initializer: expected %d items but got %d", var->ctype->len, len);
         }
-        expect(';');
-        return ast_decl(var, init);
+        parser_expect(';');
+        return parser_ast_decl(var, init);
     }
-    ast_t *init = read_expr();
-    expect(';');
+    ast_t *init = parser_read_expr();
+    parser_expect(';');
     if (var->type == AST_GVAR)
-        init = ast_inttype(ctype_int, eval_intexpr(init));
-    return ast_decl(var, init);
+        init = parser_ast_inttype(ctype_int, parser_eval_intexpr(init));
+    return parser_ast_decl(var, init);
 }
 
-ctype_t* read_array_dimensions_int(ctype_t *basetype) {
-    token_t tok = read_token();
-    if (!is_punct(tok, '[')) {
-        unget_token(tok);
+ctype_t* parser_read_array_dimensions_int(ctype_t *basetype) {
+    token_t tok = lexer_read_token();
+    if (!lexer_is_punct(tok, '[')) {
+        lexer_unget_token(tok);
         return NULL;
     }
     int dim = -1;
-    if (!is_punct(peek_token(), ']')) {
-        ast_t *size = read_expr();
-        dim = eval_intexpr(size);
+    if (!lexer_is_punct(lexer_peek_token(), ']')) {
+        ast_t *size = parser_read_expr();
+        dim = parser_eval_intexpr(size);
     }
-    expect(']');
-    ctype_t *sub = read_array_dimensions_int(basetype);
+    parser_expect(']');
+    ctype_t *sub = parser_read_array_dimensions_int(basetype);
     if (sub) {
         if (sub->len == -1 && dim == -1)
             error("Array size is not specified");
-        return make_array_type(sub, dim);
+        return parser_make_array_type(sub, dim);
     }
-    return make_array_type(basetype, dim);
+    return parser_make_array_type(basetype, dim);
 }
 
-ctype_t* read_array_dimensions(ctype_t *basetype) {
-    ctype_t *ctype = read_array_dimensions_int(basetype);
+ctype_t* parser_read_array_dimensions(ctype_t *basetype) {
+    ctype_t *ctype = parser_read_array_dimensions_int(basetype);
     return ctype ? ctype : basetype;
 }
 
-ast_t* read_decl_init(ast_t *var) {
-    token_t tok = read_token();
-    if (is_punct(tok, '='))
-        return read_decl_init_val(var);
+ast_t* parser_read_decl_init(ast_t *var) {
+    token_t tok = lexer_read_token();
+    if (lexer_is_punct(tok, '='))
+        return parser_read_decl_init_val(var);
     if (var->ctype->len == -1)
         error("Missing array initializer");
-    unget_token(tok);
-    expect(';');
-    return ast_decl(var, NULL);
+    lexer_unget_token(tok);
+    parser_expect(';');
+    return parser_ast_decl(var, NULL);
 }
 
-ctype_t* read_decl_int(token_t *name) {
-    ctype_t *ctype = read_decl_spec();
-    *name = read_token();
+ctype_t* parser_read_decl_int(token_t *name) {
+    ctype_t *ctype = parser_read_decl_spec();
+    *name = lexer_read_token();
     if (get_ttype((*name)) != TTYPE_IDENT)
         error("Identifier expected, but got %s", token_to_string(*name));
-    return read_array_dimensions(ctype);
+    return parser_read_array_dimensions(ctype);
 }
 
-ast_t* read_decl(void) {
+ast_t* parser_read_decl(void) {
     token_t varname;
-    ctype_t *ctype = read_decl_int(&varname);
+    ctype_t *ctype = parser_read_decl_int(&varname);
     if (ctype == ctype_void)
         error("Storage size of '%s' is not known", token_to_string(varname));
-    ast_t *var = ast_lvar(ctype, get_ident(varname));
-    return read_decl_init(var);
+    ast_t *var = parser_ast_lvar(ctype, get_ident(varname));
+    return parser_read_decl_init(var);
 }
 
-ast_t* read_if_stmt(void) {
-    expect('(');
-    ast_t *cond = read_expr();
-    expect(')');
-    ast_t *then = read_stmt();
-    token_t tok = read_token();
+ast_t* parser_read_if_stmt(void) {
+    parser_expect('(');
+    ast_t *cond = parser_read_expr();
+    parser_expect(')');
+    ast_t *then = parser_read_stmt();
+    token_t tok = lexer_read_token();
     if (get_ttype(tok) != TTYPE_IDENT || strcmp(get_ident(tok), "else")) {
-        unget_token(tok);
-        return ast_if(cond, then, NULL);
+        lexer_unget_token(tok);
+        return parser_ast_if(cond, then, NULL);
     }
-    ast_t *els = read_stmt();
-    return ast_if(cond, then, els);
+    ast_t *els = parser_read_stmt();
+    return parser_ast_if(cond, then, els);
 }
 
-ast_t* read_opt_decl_or_stmt(void) {
-    token_t tok = read_token();
-    if (is_punct(tok, ';'))
+ast_t* parser_read_opt_decl_or_stmt(void) {
+    token_t tok = lexer_read_token();
+    if (lexer_is_punct(tok, ';'))
         return NULL;
-    unget_token(tok);
-    return read_decl_or_stmt();
+    lexer_unget_token(tok);
+    return parser_read_decl_or_stmt();
 }
 
-ast_t* read_opt_expr(void) {
-    token_t tok = read_token();
-    if (is_punct(tok, ';'))
+ast_t* parser_read_opt_expr(void) {
+    token_t tok = lexer_read_token();
+    if (lexer_is_punct(tok, ';'))
         return NULL;
-    unget_token(tok);
-    ast_t *r = read_expr();
-    expect(';');
+    lexer_unget_token(tok);
+    ast_t *r = parser_read_expr();
+    parser_expect(';');
     return r;
 }
 
-ast_t* read_for_stmt(void) {
-    expect('(');
-    localenv = make_dict(localenv);
-    ast_t *init = read_opt_decl_or_stmt();
-    ast_t *cond = read_opt_expr();
-    ast_t *step = is_punct(peek_token(), ')') ? NULL : read_expr();
-    expect(')');
-    ast_t *body = read_stmt();
+ast_t* parser_read_for_stmt(void) {
+    parser_expect('(');
+    localenv = dict_make(localenv);
+    ast_t *init = parser_read_opt_decl_or_stmt();
+    ast_t *cond = parser_read_opt_expr();
+    ast_t *step = lexer_is_punct(lexer_peek_token(), ')') ? NULL : parser_read_expr();
+    parser_expect(')');
+    ast_t *body = parser_read_stmt();
     localenv = dict_parent(localenv);
-    return ast_for(init, cond, step, body);
+    return parser_ast_for(init, cond, step, body);
 }
 
-ast_t* read_return_stmt(void) {
-    ast_t *retval = read_expr();
-    expect(';');
-    return ast_return(retval);
+ast_t* parser_read_return_stmt(void) {
+    ast_t *retval = parser_read_expr();
+    parser_expect(';');
+    return parser_ast_return(retval);
 }
 
-ast_t* read_stmt(void) {
-    token_t tok = read_token();
-    if (is_ident(tok, "if"))
-        return read_if_stmt();
-    if (is_ident(tok, "for"))
-        return read_for_stmt();
-    if (is_ident(tok, "return"))
-        return read_return_stmt();
-    if (is_punct(tok, '{'))
-        return read_compound_stmt();
-    unget_token(tok);
-    ast_t *r = read_expr();
-    expect(';');
+ast_t* parser_read_stmt(void) {
+    token_t tok = lexer_read_token();
+    if (parser_is_ident(tok, "if"))
+        return parser_read_if_stmt();
+    if (parser_is_ident(tok, "for"))
+        return parser_read_for_stmt();
+    if (parser_is_ident(tok, "return"))
+        return parser_read_return_stmt();
+    if (lexer_is_punct(tok, '{'))
+        return parser_read_compound_stmt();
+    lexer_unget_token(tok);
+    ast_t *r = parser_read_expr();
+    parser_expect(';');
     return r;
 }
 
-ast_t* read_decl_or_stmt(void) {
-    token_t tok = peek_token();
+ast_t* parser_read_decl_or_stmt(void) {
+    token_t tok = lexer_peek_token();
     if (get_ttype(tok) == TTYPE_NULL)
         return NULL;
-    return is_type_keyword(tok) ? read_decl() : read_stmt();
+    return parser_is_type_keyword(tok) ? parser_read_decl() : parser_read_stmt();
 }
 
-ast_t* read_compound_stmt(void) {
-    localenv = make_dict(localenv);
-    list_t *list = make_list();
+ast_t* parser_read_compound_stmt(void) {
+    localenv = dict_make(localenv);
+    list_t *list = list_make();
     while (1) {
-        ast_t *stmt = read_decl_or_stmt();
+        ast_t *stmt = parser_read_decl_or_stmt();
         if (stmt)
             list_push(list, stmt);
         if (!stmt)
             break;
-        token_t tok = read_token();
-        if (is_punct(tok, '}'))
+        token_t tok = lexer_read_token();
+        if (lexer_is_punct(tok, '}'))
             break;
-        unget_token(tok);
+        lexer_unget_token(tok);
     }
     localenv = dict_parent(localenv);
-    return ast_compound_stmt(list);
+    return parser_ast_compound_stmt(list);
 }
 
-list_t* read_params(void) {
-    list_t *params = make_list();
-    token_t tok = read_token();
-    if (is_punct(tok, ')'))
+list_t* parser_read_params(void) {
+    list_t *params = list_make();
+    token_t tok = lexer_read_token();
+    if (lexer_is_punct(tok, ')'))
         return params;
-    unget_token(tok);
+    lexer_unget_token(tok);
     while (1) {
-        ctype_t *ctype = read_decl_spec();
-        token_t pname = read_token();
+        ctype_t *ctype = parser_read_decl_spec();
+        token_t pname = lexer_read_token();
         if (get_ttype(pname) != TTYPE_IDENT)
             error("Identifier expected, but got %s", token_to_string(pname));
-        ctype = read_array_dimensions(ctype);
+        ctype = parser_read_array_dimensions(ctype);
         if (ctype->type == CTYPE_ARRAY)
-            ctype = make_ptr_type(ctype->ptr);
-        list_push(params, ast_lvar(ctype, get_ident(pname)));
-        token_t tok = read_token();
-        if (is_punct(tok, ')'))
+            ctype = parser_make_ptr_type(ctype->ptr);
+        list_push(params, parser_ast_lvar(ctype, get_ident(pname)));
+        token_t tok = lexer_read_token();
+        if (lexer_is_punct(tok, ')'))
             return params;
-        if (!is_punct(tok, ','))
+        if (!lexer_is_punct(tok, ','))
             error("Comma expected, but got %s", token_to_string(tok));
     }
 }
 
-ast_t* read_func_def(ctype_t *rettype, char *fname) {
-    expect('(');
-    localenv = make_dict(globalenv);
-    list_t *params = read_params();
-    expect('{');
-    localenv = make_dict(localenv);
-    localvars = make_list();
-    ast_t *body = read_compound_stmt();
-    ast_t *r = ast_func(rettype, fname, params, body, localvars);
+ast_t* parser_read_func_def(ctype_t *rettype, char *fname) {
+    parser_expect('(');
+    localenv = dict_make(globalenv);
+    list_t *params = parser_read_params();
+    parser_expect('{');
+    localenv = dict_make(localenv);
+    localvars = list_make();
+    ast_t *body = parser_read_compound_stmt();
+    ast_t *r = parser_ast_func(rettype, fname, params, body, localvars);
     localenv = dict_parent(localenv);
     localenv = dict_parent(localenv);
     localvars = NULL;
     return r;
 }
 
-ast_t* read_decl_or_func_def(void) {
-    token_t tok = peek_token();
+ast_t* parser_read_decl_or_func_def(void) {
+    token_t tok = lexer_peek_token();
     if (get_ttype(tok) == TTYPE_NULL)
         return NULL;
-    ctype_t *ctype = read_decl_spec();
-    token_t name = read_token();
+    ctype_t *ctype = parser_read_decl_spec();
+    token_t name = lexer_read_token();
     char *ident;
     if (get_ttype(name) != TTYPE_IDENT)
         error("Identifier expected, but got %s", token_to_string(name));
     ident = get_ident(name);
-    tok = peek_token();
-    if (is_punct(tok, '('))
-        return read_func_def(ctype, ident);
+    tok = lexer_peek_token();
+    if (lexer_is_punct(tok, '('))
+        return parser_read_func_def(ctype, ident);
     if (ctype == ctype_void)
         error("Storage size of '%s' is not known", token_to_string(name));
-    ctype = read_array_dimensions(ctype);
-    if (is_punct(tok, '=') || ctype->type == CTYPE_ARRAY) {
-        ast_t *var = ast_gvar(ctype, ident, false);
-        return read_decl_init(var);
+    ctype = parser_read_array_dimensions(ctype);
+    if (lexer_is_punct(tok, '=') || ctype->type == CTYPE_ARRAY) {
+        ast_t *var = parser_ast_gvar(ctype, ident, false);
+        return parser_read_decl_init(var);
     }
-    if (is_punct(tok, ';')) {
-        read_token();
-        ast_t *var = ast_gvar(ctype, ident, false);
-        return ast_decl(var, NULL);
+    if (lexer_is_punct(tok, ';')) {
+        lexer_read_token();
+        ast_t *var = parser_ast_gvar(ctype, ident, false);
+        return parser_ast_decl(var, NULL);
     }
     error("Don't know how to handle %s", token_to_string(tok));
     return NULL; /* non-reachable */
 }
 
-list_t* read_toplevels(void) {
-    list_t *r = make_list();
+list_t* parser_read_toplevels(void) {
+    list_t *r = list_make();
     while (1) {
-        ast_t *ast = read_decl_or_func_def();
+        ast_t *ast = parser_read_decl_or_func_def();
         if (!ast)
             return r;
         list_push(r, ast);

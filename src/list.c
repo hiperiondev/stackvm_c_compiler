@@ -24,7 +24,7 @@
 extern void **mkstr;
 extern long mkstr_qty;
 
-list_t* make_list(void) {
+list_t* list_make(void) {
     list_t *r = malloc(sizeof(list_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->len = 0;
@@ -32,7 +32,7 @@ list_t* make_list(void) {
     return r;
 }
 
-void* make_node(void *elem) {
+void* list_make_node(void *elem) {
     list_node_t *r = malloc(sizeof(list_node_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->elem = elem;
@@ -42,7 +42,7 @@ void* make_node(void *elem) {
 }
 
 void list_push(list_t *list, void *elem) {
-    list_node_t *node = make_node(elem);
+    list_node_t *node = list_make_node(elem);
     if (!list->head) {
         list->head = node;
     } else {
@@ -75,7 +75,7 @@ void* list_pop(list_t *list) {
 }
 
 void list_unshift(list_t *list, void *elem) {
-    list_node_t *node = make_node(elem);
+    list_node_t *node = list_make_node(elem);
     node->next = list->head;
     if (list->head)
         list->head->prev = node;
@@ -90,11 +90,11 @@ iter_t list_iter(void *ptr) {
     return ret;
 }
 
-bool iter_end(const iter_t iter) {
+bool list_iter_end(const iter_t iter) {
     return !iter.ptr;
 }
 
-void* iter_next(iter_t *iter) {
+void* list_iter_next(iter_t *iter) {
     if (!iter->ptr)
         return NULL;
     void *r = iter->ptr->elem;
@@ -103,9 +103,9 @@ void* iter_next(iter_t *iter) {
 }
 
 list_t* list_reverse(list_t *list) {
-    list_t *r = make_list();
-    for (iter_t i = list_iter(list); !iter_end(i);)
-        list_unshift(r, iter_next(&i));
+    list_t *r = list_make();
+    for (iter_t i = list_iter(list); !list_iter_end(i);)
+        list_unshift(r, list_iter_next(&i));
     return r;
 }
 

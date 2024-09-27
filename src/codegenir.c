@@ -22,7 +22,7 @@
 #include "parser.h"
 #include "util.h"
 #include "list.h"
-#include "codegen_ir.h"
+#include "codegenir.h"
 
 static int TAB = 8;
 FILE *outfp;
@@ -30,21 +30,21 @@ static list_t *functions = &EMPTY_LIST;
 extern list_t *strings;
 extern list_t *flonums;
 
-void pop_function(void *ignore UNUSED) {
+void codegenir_pop_function(void *ignore UNUSED) {
     list_pop(functions);
 }
 
-char* get_caller_list(void) {
-    string_t s = make_string();
-    for (iter_t i = list_iter(functions); !iter_end(i);) {
-        string_appendf(&s, "%s", iter_next(&i));
-        if (!iter_end(i))
-            string_appendf(&s, " -> ");
+char* codegenir_get_caller_list(void) {
+    string_t s = util_make_string();
+    for (iter_t i = list_iter(functions); !list_iter_end(i);) {
+        util_string_appendf(&s, "%s", list_iter_next(&i));
+        if (!list_iter_end(i))
+            util_string_appendf(&s, " -> ");
     }
-    return get_cstring(s);
+    return util_get_cstring(s);
 }
 
-void emitf(int line, char *fmt, ...) {
+void codegenir_emitf(int line, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     int col = vfprintf(outfp, fmt, args);
@@ -54,22 +54,22 @@ void emitf(int line, char *fmt, ...) {
         if (*p == '\t')
             col += TAB - 1;
     int space = (28 - col) > 0 ? (30 - col) : 2;
-    fprintf(outfp, "%*c %s:%d\n", space, '#', get_caller_list(), line);
+    fprintf(outfp, "%*c %s:%d\n", space, '#', codegenir_get_caller_list(), line);
 }
 
-void emit_data_section(void) {
+void codegenir_emit_data_section(void) {
     SAVE();
     emit(".data");
-    for (iter_t i = list_iter(strings); !iter_end(i);) {
-        ast_t *v = iter_next(&i);
+    for (iter_t i = list_iter(strings); !list_iter_end(i);) {
+        ast_t *v = list_iter_next(&i);
         emit_label("%s:", v->slabel);
-        char *cstr = quote_cstring(v->sval);
+        char *cstr = util_quote_cstring(v->sval);
         emit(".string \"%s\"", cstr);
-        lfree(cstr);
+        util_lfree(cstr);
     }
-    for (iter_t i = list_iter(flonums); !iter_end(i);) {
-        ast_t *v = iter_next(&i);
-        char *label = make_label();
+    for (iter_t i = list_iter(flonums); !list_iter_end(i);) {
+        ast_t *v = list_iter_next(&i);
+        char *label = parser_make_label();
         v->flabel = label;
         emit_label("%s:", label);
         emit(".long %d", v->lval[0]);
@@ -79,6 +79,6 @@ void emit_data_section(void) {
 
 ////////////////////////////////////////////////////////////////////////
 
-void emit_toplevel(ast_t *v) {
+void codegenir_emit_toplevel(ast_t *v) {
 
 }
