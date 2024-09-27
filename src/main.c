@@ -22,13 +22,14 @@
 
 #include "util.h"
 #include "c_stackvm.h"
+#include "codegen_ir.h"
+#include "parser.h"
+#include "verbose.h"
 
 static char *outfile = NULL, *infile = NULL;
 extern FILE *outfp;
 static bool dump_ast;
-
 extern void **mkstr;
-extern long mkstr_qty;
 
 static void usage() {
     fprintf(stdout, "stackvm_c_compiler [options] filename\n"
@@ -109,12 +110,12 @@ int main(int argc, char **argv) {
     open_output_file();
     mkstr = malloc(sizeof(void*));
 
-    List *toplevels = read_toplevels();
+    list_t *toplevels = read_toplevels();
     if (!dump_ast)
         emit_data_section();
 
-    for (Iter i = list_iter(toplevels); !iter_end(i);) {
-        Ast *v = iter_next(&i);
+    for (iter_t i = list_iter(toplevels); !iter_end(i);) {
+        ast_t *v = iter_next(&i);
         if (dump_ast) {
             char *aststr = ast_to_string(v, true);
             printf("%s \n", aststr);

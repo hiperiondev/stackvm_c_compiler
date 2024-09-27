@@ -24,8 +24,8 @@
 extern void **mkstr;
 extern long mkstr_qty;
 
-List* make_list(void) {
-    List *r = malloc(sizeof(List));
+list_t* make_list(void) {
+    list_t *r = malloc(sizeof(list_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->len = 0;
     r->head = r->tail = NULL;
@@ -33,7 +33,7 @@ List* make_list(void) {
 }
 
 void* make_node(void *elem) {
-    ListNode *r = malloc(sizeof(ListNode));
+    list_node_t *r = malloc(sizeof(list_node_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->elem = elem;
     r->next = NULL;
@@ -41,8 +41,8 @@ void* make_node(void *elem) {
     return r;
 }
 
-void list_push(List *list, void *elem) {
-    ListNode *node = make_node(elem);
+void list_push(list_t *list, void *elem) {
+    list_node_t *node = make_node(elem);
     if (!list->head) {
         list->head = node;
     } else {
@@ -53,10 +53,10 @@ void list_push(List *list, void *elem) {
     list->len++;
 }
 
-void* list_pop(List *list) {
+void* list_pop(list_t *list) {
     if (!list->head)
         return NULL;
-    ListNode *tail = list->tail;
+    list_node_t *tail = list->tail;
     void *r = tail->elem;
     list->tail = tail->prev;
     if (list->tail)
@@ -74,8 +74,8 @@ void* list_pop(List *list) {
     return r;
 }
 
-void list_unshift(List *list, void *elem) {
-    ListNode *node = make_node(elem);
+void list_unshift(list_t *list, void *elem) {
+    list_node_t *node = make_node(elem);
     node->next = list->head;
     if (list->head)
         list->head->prev = node;
@@ -85,16 +85,16 @@ void list_unshift(List *list, void *elem) {
     list->len++;
 }
 
-Iter list_iter(void *ptr) {
-    Iter ret = { .ptr = ((List*) ptr)->head, };
+iter_t list_iter(void *ptr) {
+    iter_t ret = { .ptr = ((list_t*) ptr)->head, };
     return ret;
 }
 
-bool iter_end(const Iter iter) {
+bool iter_end(const iter_t iter) {
     return !iter.ptr;
 }
 
-void* iter_next(Iter *iter) {
+void* iter_next(iter_t *iter) {
     if (!iter->ptr)
         return NULL;
     void *r = iter->ptr->elem;
@@ -102,19 +102,19 @@ void* iter_next(Iter *iter) {
     return r;
 }
 
-List* list_reverse(List *list) {
-    List *r = make_list();
-    for (Iter i = list_iter(list); !iter_end(i);)
+list_t* list_reverse(list_t *list) {
+    list_t *r = make_list();
+    for (iter_t i = list_iter(list); !iter_end(i);)
         list_unshift(r, iter_next(&i));
     return r;
 }
 
-int list_len(List *list) {
+int list_len(list_t *list) {
     return list->len;
 }
 
-void list_free(List *list) {
-    ListNode *node, *tmp;
+void list_free(list_t *list) {
+    list_node_t *node, *tmp;
     list_for_each_safe (node, tmp, list)
     {
         for (long n = 0; n < mkstr_qty; n++) {

@@ -29,6 +29,6 @@
 char* get_caller_list(void);
  void emitf(int line, char *fmt, ...);
  void emit_data_section(void);
- void emit_toplevel(Ast *v);
+ void emit_toplevel(ast_t *v);
 
 #endif /* CODEGEN_IR_H_ */

@@ -23,13 +23,13 @@
 #include "lexer.h"
 
 static bool ungotten = false;
-static Token ungotten_buf = { 0 };
+static token_t ungotten_buf = { 0 };
 
 extern void **mkstr;
 extern long mkstr_qty;
 
-Token make_token(enum TokenType type, uintptr_t data) {
-    Token ret = {
+token_t make_token(enum token_type type, uintptr_t data) {
+    token_t ret = {
             .type = type,
             .priv = data,
     };
@@ -46,8 +46,8 @@ int getc_nonspace(void) {
     return EOF;
 }
 
-Token read_number(char c) {
-    String s = make_string();
+token_t read_number(char c) {
+    string_t s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
     while (1) {
@@ -60,7 +60,7 @@ Token read_number(char c) {
     }
 }
 
-Token read_char(void) {
+token_t read_char(void) {
     char c = getc(stdin);
     if (c == EOF)
         goto err;
@@ -80,8 +80,8 @@ err:
     return make_null(); /* non-reachable */
 }
 
-Token read_string(void) {
-    String s = make_string();
+token_t read_string(void) {
+    string_t s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     while (1) {
         int c = getc(stdin);
@@ -108,8 +108,8 @@ Token read_string(void) {
     return make_strtok(s);
 }
 
-Token read_ident(char c) {
-    String s = make_string();
+token_t read_ident(char c) {
+    string_t s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
     while (1) {
@@ -146,7 +146,7 @@ void skip_block_comment(void) {
     }
 }
 
-Token read_rep(int expect, int t1, int t2) {
+token_t read_rep(int expect, int t1, int t2) {
     int c = getc(stdin);
     if (c == expect)
         return make_punct(t2);
@@ -154,7 +154,7 @@ Token read_rep(int expect, int t1, int t2) {
     return make_punct(t1);
 }
 
-Token read_token_int(void) {
+token_t read_token_int(void) {
     int c = getc_nonspace();
     switch (c) {
         case '0' ... '9':
@@ -222,11 +222,11 @@ Token read_token_int(void) {
     }
 }
 
-bool is_punct(const Token tok, int c) {
+bool is_punct(const token_t tok, int c) {
     return (get_ttype(tok) == TTYPE_PUNCT) && (get_punct(tok) == c);
 }
 
-void unget_token(const Token tok) {
+void unget_token(const token_t tok) {
     if (get_ttype(tok) == TTYPE_NULL)
         return;
     if (ungotten)
@@ -235,13 +235,13 @@ void unget_token(const Token tok) {
     ungotten_buf = make_token(tok.type, tok.priv);
 }
 
-Token peek_token(void) {
-    Token tok = read_token();
+token_t peek_token(void) {
+    token_t tok = read_token();
     unget_token(tok);
     return tok;
 }
 
-Token read_token(void) {
+token_t read_token(void) {
     if (ungotten) {
         ungotten = false;
         return make_token(ungotten_buf.type, ungotten_buf.priv);

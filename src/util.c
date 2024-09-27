@@ -27,7 +27,7 @@
 void **mkstr = NULL;
 long mkstr_qty = 0;
 
-static List *cstrings = &EMPTY_LIST;
+static list_t *cstrings = &EMPTY_LIST;
 
 void free_all(void) {
     for (long n = 0; n < mkstr_qty; n++) {
@@ -53,13 +53,13 @@ void lfree(void *ptr) {
     free(ptr);
 }
 
-String make_string(void) {
-    String ret = { .body = calloc(1, INIT_SIZE), .nalloc = INIT_SIZE, .len = 0, };
+string_t make_string(void) {
+    string_t ret = { .body = calloc(1, INIT_SIZE), .nalloc = INIT_SIZE, .len = 0, };
 
     return ret;
 }
 
-void realloc_body(String *s) {
+void realloc_body(string_t *s) {
     int newsize = s->nalloc * 2;
 
     char *body = realloc(s->body, newsize);
@@ -70,13 +70,13 @@ void realloc_body(String *s) {
 
 }
 
-char* get_cstring(const String s) {
+char* get_cstring(const string_t s) {
     char *r = s.body;
     list_push(cstrings, r);
     return r;
 }
 
-void string_append(String *s, char c) {
+void string_append(string_t *s, char c) {
     long pos = LONG_MAX;
 
     if (s->nalloc == (s->len + 1)) {
@@ -95,7 +95,7 @@ void string_append(String *s, char c) {
     s->body[s->len] = '\0';
 }
 
-void string_appendf(String *s, char *fmt, ...) {
+void string_appendf(string_t *s, char *fmt, ...) {
     va_list args;
     long pos = LONG_MAX;
     while (1) {
@@ -133,7 +133,7 @@ void errorf(char *file, int line, char *fmt, ...) {
 }
 
 char* quote_cstring(char *p) {
-    String s = make_string();
+    string_t s = make_string();
     for (; *p; p++) {
         if (*p == '\"' || *p == '\\')
             string_appendf(&s, "\\%c", *p);

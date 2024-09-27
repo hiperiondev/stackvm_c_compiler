@@ -26,17 +26,17 @@ extern void **mkstr;
 extern long mkstr_qty;
 
 void* make_dict(void *parent) {
-    Dict *r = malloc(sizeof(Dict));
+    dict_t *r = malloc(sizeof(dict_t));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->list = make_list();
     r->parent = parent;
     return r;
 }
 
-void* dict_get(Dict *dict, char *key) {
+void* dict_get(dict_t *dict, char *key) {
     for (; dict; dict = dict->parent) {
-        for (Iter i = list_iter(dict->list); !iter_end(i);) {
-            DictEntry *e = iter_next(&i);
+        for (iter_t i = list_iter(dict->list); !iter_end(i);) {
+            dict_entry_t *e = iter_next(&i);
             if (!strcmp(key, e->key))
                 return e->val;
         }
@@ -44,31 +44,31 @@ void* dict_get(Dict *dict, char *key) {
     return NULL;
 }
 
-void dict_put(Dict *dict, char *key, void *val) {
-    DictEntry *e = malloc(sizeof(DictEntry));
+void dict_put(dict_t *dict, char *key, void *val) {
+    dict_entry_t *e = malloc(sizeof(dict_entry_t));
     add_str_ptr(mkstr, mkstr_qty, e);
     e->key = key;
     e->val = val;
     list_push(dict->list, e);
 }
 
-List* dict_keys(Dict *dict) {
-    List *r = make_list();
+list_t* dict_keys(dict_t *dict) {
+    list_t *r = make_list();
     for (; dict; dict = dict->parent)
-        for (Iter i = list_iter(dict->list); !iter_end(i);)
-            list_push(r, ((DictEntry*) iter_next(&i))->key);
+        for (iter_t i = list_iter(dict->list); !iter_end(i);)
+            list_push(r, ((dict_entry_t*) iter_next(&i))->key);
     return r;
 }
 
-List* dict_values(Dict *dict) {
-    List *r = make_list();
+list_t* dict_values(dict_t *dict) {
+    list_t *r = make_list();
     for (; dict; dict = dict->parent)
-        for (Iter i = list_iter(dict->list); !iter_end(i);)
-            list_push(r, ((DictEntry*) iter_next(&i))->val);
+        for (iter_t i = list_iter(dict->list); !iter_end(i);)
+            list_push(r, ((dict_entry_t*) iter_next(&i))->val);
     return r;
 }
 
-void* dict_parent(Dict *dict) {
+void* dict_parent(dict_t *dict) {
     void *r = dict->parent;
 
     for (long n = 0; n < mkstr_qty; n++) {

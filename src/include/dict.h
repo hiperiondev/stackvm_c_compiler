@@ -20,23 +20,23 @@
 
 #include "list.h"
 
-typedef struct Dict {
-           List *list;
-    struct Dict *parent;
-} Dict;
+typedef struct dict_s {
+           list_t *list;
+    struct dict_s *parent;
+} dict_t;
 
-#define EMPTY_DICT ((Dict){&EMPTY_LIST, NULL})
+#define EMPTY_DICT ((dict_t){&EMPTY_LIST, NULL})
 
 typedef struct {
     char *key;
     void *val;
-} DictEntry;
+} dict_entry_t;
 
-void* make_dict(void *parent);
-void* dict_get(Dict *dict, char *key);
- void dict_put(Dict *dict, char *key, void *val);
-List* dict_keys(Dict *dict);
-List* dict_values(Dict *dict);
-void* dict_parent(Dict *dict);
+  void* make_dict(void *parent);
+  void* dict_get(dict_t *dict, char *key);
+   void dict_put(dict_t *dict, char *key, void *val);
+list_t* dict_keys(dict_t *dict);
+list_t* dict_values(dict_t *dict);
+  void* dict_parent(dict_t *dict);
 
 #endif /* DICT_H_ */

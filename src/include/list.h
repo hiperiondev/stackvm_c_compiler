@@ -20,36 +20,36 @@
 
 #include <stdbool.h>
 
-#define EMPTY_LIST ((List){.len = 0, .head = NULL, .tail = NULL})
+#define EMPTY_LIST ((list_t){.len = 0, .head = NULL, .tail = NULL})
 #define list_safe_next(node) ((node) ? (node)->next : NULL)
 #define list_for_each_safe(node, tmp, list)                           \
     for ((node) = (list)->head, (tmp) = list_safe_next(node); (node); \
          (node) = (tmp), (tmp) = list_safe_next(node))
 
-typedef struct __ListNode {
-    void *elem;
-    struct __ListNode *next, *prev;
-} ListNode;
+typedef struct list_node_s {
+                  void *elem;
+    struct list_node_s *next, *prev;
+} list_node_t;
 
 typedef struct {
-    int len;
-    ListNode *head, *tail;
-} List;
+            int len;
+    list_node_t *head, *tail;
+} list_t;
 
 typedef struct {
-    ListNode *ptr;
-} Iter;
+    list_node_t *ptr;
+} iter_t;
 
-List* make_list(void);
-void* make_node(void *elem);
- void list_push(List *list, void *elem);
-void* list_pop(List *list);
- void list_unshift(List *list, void *elem);
- Iter list_iter(void *ptr);
- bool iter_end(const Iter iter);
-void* iter_next(Iter *iter);
-List* list_reverse(List *list);
-  int list_len(List *list);
- void list_free(List *list);
+list_t* make_list(void);
+  void* make_node(void *elem);
+   void list_push(list_t *list, void *elem);
+  void* list_pop(list_t *list);
+   void list_unshift(list_t *list, void *elem);
+ iter_t list_iter(void *ptr);
+   bool iter_end(const iter_t iter);
+  void* iter_next(iter_t *iter);
+list_t* list_reverse(list_t *list);
+    int list_len(list_t *list);
+   void list_free(list_t *list);
 
 #endif /* LIST_H_ */

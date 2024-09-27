@@ -27,7 +27,7 @@
 #include "list.h"
 #include "util.h"
 
-enum TokenType {
+enum token_type {
     TTYPE_NULL,
     TTYPE_IDENT,
     TTYPE_PUNCT,
@@ -37,9 +37,9 @@ enum TokenType {
 };
 
 typedef struct {
-    int type;
+          int type;
     uintptr_t priv;
-} Token;
+} token_t;
 
 enum {
     AST_LITERAL = 256,
@@ -83,19 +83,19 @@ enum {
     CTYPE_STRUCT,
 };
 
-typedef struct __Ctype {
-    int type;
-    int size;
-    struct __Ctype *ptr; /* pointer or array */
-    int len; /* array length */
-    /* struct */
-    Dict *fields;
-    int offset;
-} Ctype;
+typedef struct ctype_s {
+                int type;
+                int size;
+    struct ctype_s *ptr; /* pointer or array */
+               int len;  /* array length */
+            /* struct */
+            dict_t *fields;
+               int offset;
+} ctype_t;
 
-typedef struct __Ast {
+typedef struct ast_s {
     int type;
-    Ctype *ctype;
+    ctype_t *ctype;
     union {
         /* char, int, or long */
         long ival;
@@ -104,7 +104,7 @@ typedef struct __Ast {
         struct {
             union {
                 double fval;
-                int lval[2];
+                   int lval[2];
             };
             char *flabel;
         };
@@ -119,93 +119,82 @@ typedef struct __Ast {
         struct {
             char *varname;
             struct {
-                int loff;
+                 int loff;
                 char *glabel;
             };
         };
 
         /* Binary operator */
         struct {
-            struct __Ast *left;
-            struct __Ast *right;
+            struct ast_s *left;
+            struct ast_s *right;
         };
 
         /* Unary operator */
         struct {
-            struct __Ast *operand;
+            struct ast_s *operand;
         };
 
         /* Function call or function declaration */
         struct {
             char *fname;
             struct {
-                List *args;
+                list_t *args;
                 struct {
-                    List *params;
-                    List *localvars;
-                    struct __Ast *body;
+                          list_t *params;
+                          list_t *localvars;
+                    struct ast_s *body;
                 };
             };
         };
 
         /* Declaration */
         struct {
-            struct __Ast *declvar;
-            struct __Ast *declinit;
+            struct ast_s *declvar;
+            struct ast_s *declinit;
         };
 
         /* Array initializer */
-        List *arrayinit;
+        list_t *arrayinit;
 
         /* if statement or ternary operator */
         struct {
-            struct __Ast *cond;
-            struct __Ast *then;
-            struct __Ast *els;
+            struct ast_s *cond;
+            struct ast_s *then;
+            struct ast_s *els;
         };
 
         /* for statement */
         struct {
-            struct __Ast *forinit;
-            struct __Ast *forcond;
-            struct __Ast *forstep;
-            struct __Ast *forbody;
+            struct ast_s *forinit;
+            struct ast_s *forcond;
+            struct ast_s *forstep;
+            struct ast_s *forbody;
         };
 
         /* return statement */
-        struct __Ast *retval;
+        struct ast_s *retval;
 
         /* Compound statement */
-        List *stmts;
+        list_t *stmts;
 
         /* Struct reference */
         struct {
-            struct __Ast *struc;
-            char *field; /* specific to ast_to_string only */
+            struct ast_s *struc;
+                    char *field; /* specific to ast_to_string only */
         };
     };
-} Ast;
-
-/* verbose.c */
-extern char* token_to_string(const Token tok);
-extern char* ast_to_string(Ast *ast, bool first_entry);
-extern char* ctype_to_string(Ctype *ctype);
-
-/* lexer.c */
-extern bool is_punct(const Token tok, int c);
-extern void unget_token(const Token tok);
-extern Token peek_token(void);
-extern Token read_token(void);
+} ast_t;
 
 #define get_priv(tok, type)                                       \
     ({                                                            \
-        assert(__builtin_types_compatible_p(typeof(tok), Token)); \
+        assert(__builtin_types_compatible_p(typeof(tok), token_t)); \
         ((type) tok.priv);                                        \
     })
 
 #define get_ttype(tok)                                            \
     ({                                                            \
-        assert(__builtin_types_compatible_p(typeof(tok), Token)); \
+        assert(__builtin_types_compatible_p(typeof(tok), token_t)); \
         (tok.type);                                               \
     })
 
@@ -220,18 +209,5 @@ extern Token read_token(void);
 #define get_ident(tok)   get_token(tok, TTYPE_IDENT, char *)
 #define get_number(tok)  get_token(tok, TTYPE_NUMBER, char *)
 #define get_punct(tok)   get_token(tok, TTYPE_PUNCT, int)
-
-/* parser.c */
-extern List *strings;
-extern List *flonums;
-extern List *ctypes;
-extern char* make_label(void);
-extern List* read_toplevels(void);
-extern bool is_inttype(Ctype *ctype);
-extern bool is_flotype(Ctype *ctype);
-
-/* codegen_x64.c */
-extern void emit_data_section(void);
-extern void emit_toplevel(Ast *v);
 
 #endif /* C_STACKVM_H */

@@ -41,17 +41,17 @@
 
 typedef struct {
     char *body;
-    int nalloc, len;
-} String;
+      int nalloc, len;
+} string_t;
 
-  void free_all(void);
-  void lfree(void *ptr);
-String make_string(void);
-  void realloc_body(String *s);
- char* get_cstring(const String s);
-  void string_append(String *s, char c);
-  void string_appendf(String *s, char *fmt, ...);
-  void errorf(char *file, int line, char *fmt, ...);
- char* quote_cstring(char *p);
+    void free_all(void);
+    void lfree(void *ptr);
+string_t make_string(void);
+    void realloc_body(string_t *s);
+   char* get_cstring(const string_t s);
+    void string_append(string_t *s, char c);
+    void string_appendf(string_t *s, char *fmt, ...);
+    void errorf(char *file, int line, char *fmt, ...);
+   char* quote_cstring(char *p);
 
 #endif /* UTIL_H */

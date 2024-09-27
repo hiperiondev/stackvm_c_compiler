@@ -19,19 +19,24 @@
 #include <stdio.h>
 
 #include "c_stackvm.h"
+#include "parser.h"
+#include "util.h"
+#include "list.h"
 #include "codegen_ir.h"
 
 static int TAB = 8;
 FILE *outfp;
-static List *functions = &EMPTY_LIST;
+static list_t *functions = &EMPTY_LIST;
+extern list_t *strings;
+extern list_t *flonums;
 
 void pop_function(void *ignore UNUSED) {
     list_pop(functions);
 }
 
 char* get_caller_list(void) {
-    String s = make_string();
-    for (Iter i = list_iter(functions); !iter_end(i);) {
+    string_t s = make_string();
+    for (iter_t i = list_iter(functions); !iter_end(i);) {
         string_appendf(&s, "%s", iter_next(&i));
         if (!iter_end(i))
             string_appendf(&s, " -> ");
@@ -55,15 +60,15 @@ void emitf(int line, char *fmt, ...) {
 void emit_data_section(void) {
     SAVE();
     emit(".data");
-    for (Iter i = list_iter(strings); !iter_end(i);) {
-        Ast *v = iter_next(&i);
+    for (iter_t i = list_iter(strings); !iter_end(i);) {
+        ast_t *v = iter_next(&i);
         emit_label("%s:", v->slabel);
         char *cstr = quote_cstring(v->sval);
         emit(".string \"%s\"", cstr);
         lfree(cstr);
     }
-    for (Iter i = list_iter(flonums); !iter_end(i);) {
-        Ast *v = iter_next(&i);
+    for (iter_t i = list_iter(flonums); !iter_end(i);) {
+        ast_t *v = iter_next(&i);
         char *label = make_label();
         v->flabel = label;
         emit_label("%s:", label);
@@ -74,6 +79,6 @@ void emit_data_section(void) {
 
 ////////////////////////////////////////////////////////////////////////
 
-void emit_toplevel(Ast *v) {
+void emit_toplevel(ast_t *v) {
 
 }

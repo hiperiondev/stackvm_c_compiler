@@ -20,13 +20,14 @@
 
 #include "c_stackvm.h"
 #include "verbose.h"
+#include "lexer.h"
 
 static int tab = 0;
 static bool cont = false;
 static bool excpt = false;
 static bool no_break = false;
 
-char* ctype_to_string(Ctype *ctype) {
+char* ctype_to_string(ctype_t *ctype) {
     if (!ctype)
         return "(nil)";
 
@@ -46,19 +47,19 @@ char* ctype_to_string(Ctype *ctype) {
             return "(DOUBLE)";
 #endif
         case CTYPE_PTR: {
-            String s = make_string();
+            string_t s = make_string();
             string_appendf(&s, "(PTR) %s", ctype_to_string(ctype->ptr));
             return get_cstring(s);
         }
         case CTYPE_ARRAY: {
-            String s = make_string();
+            string_t s = make_string();
             string_appendf(&s, "(ARRAY) [%d] %s", ctype->len, ctype_to_string(ctype->ptr));
             return get_cstring(s);
         }
         case CTYPE_STRUCT: {
-            String s = make_string();
+            string_t s = make_string();
             string_appendf(&s, "(STRUCT) ");
-            for (Iter i = list_iter(dict_values(ctype->fields)); !iter_end(i);)
+            for (iter_t i = list_iter(dict_values(ctype->fields)); !iter_end(i);)
                 string_appendf(&s, "%s ", ctype_to_string(iter_next(&i)));
             string_appendf(&s, "");
             return get_cstring(s);
@@ -69,13 +70,13 @@ char* ctype_to_string(Ctype *ctype) {
     }
 }
 
-void uop_to_string(String *buf, char *op, Ast *ast) {
+void uop_to_string(string_t *buf, char *op, ast_t *ast) {
     char *aststr = ast_to_string(ast->operand, true);
     string_appendf(buf, "(%s %s)", op, aststr);
     lfree(aststr);
 }
 
-void binop_to_string(String *buf, char *op, Ast *ast) {
+void binop_to_string(string_t *buf, char *op, ast_t *ast) {
     char *aststr1 = ast_to_string(ast->left, true);
     char *aststr2 = ast_to_string(ast->right, true);
     string_appendf(buf, "(%s %s %s)", op, aststr1, aststr2);
@@ -83,7 +84,7 @@ void binop_to_string(String *buf, char *op, Ast *ast) {
     lfree(aststr2);
 }
 
-void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
+void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
     if (!ast) {
         string_appendf(buf, "(nil)");
         return;
@@ -144,7 +145,7 @@ void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             string_appendf(buf, "(FUNCALL) %s %s", ctype_to_string(ast->ctype), ast->fname);
             excpt = true;
             it;
-            for (Iter i = list_iter(ast->args); !iter_end(i);) {
+            for (iter_t i = list_iter(ast->args); !iter_end(i);) {
                 string_appendf(buf, "\n");
                 char *aststr = ast_to_string(iter_next(&i), true);
                 string_appendf(buf, "%*s%s", tab, "", aststr);
@@ -157,8 +158,8 @@ void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
         case AST_FUNC: {
             string_appendf(buf, "%*s(FUNC) %s %s \n", tab, "", ctype_to_string(ast->ctype), ast->fname);
             it;
-            for (Iter i = list_iter(ast->params); !iter_end(i);) {
-                Ast *param = iter_next(&i);
+            for (iter_t i = list_iter(ast->params); !iter_end(i);) {
+                ast_t *param = iter_next(&i);
                 char *aststr4 = ast_to_string(param, true);
                 string_appendf(buf, "%s %s\n", ctype_to_string(param->ctype), aststr4);
                 lfree(aststr4);
@@ -184,7 +185,7 @@ void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
         case AST_ARRAY_INIT:
             string_appendf(buf, "\n%*s(ARRAY_INIT)\n", tab, "");
             it;
-            for (Iter i = list_iter(ast->arrayinit); !iter_end(i);) {
+            for (iter_t i = list_iter(ast->arrayinit); !iter_end(i);) {
                 string_appendf(buf, "%*s", tab, "");
                 ast_to_string_int(buf, iter_next(&i), false);
                 string_appendf(buf, "\n");
@@ -257,7 +258,7 @@ void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
             string_appendf(buf, "%*s(COMPOUND_STMT)", tab, "");
             it;
             no_break = true;
-            for (Iter i = list_iter(ast->stmts); !iter_end(i);) {
+            for (iter_t i = list_iter(ast->stmts); !iter_end(i);) {
                 cont = false;
                 string_appendf(buf, "\n");
                 ast_to_string_int(buf, iter_next(&i), false);
@@ -332,17 +333,17 @@ void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
     }
 }
 
-char* ast_to_string(Ast *ast, bool first_entry) {
-    String s = make_string();
+char* ast_to_string(ast_t *ast, bool first_entry) {
+    string_t s = make_string();
     ast_to_string_int(&s, ast, first_entry);
     return get_cstring(s);
 }
 
-char* token_to_string(const Token tok) {
-    enum TokenType ttype = get_ttype(tok);
+char* token_to_string(const token_t tok) {
+    enum token_type ttype = get_ttype(tok);
     if (ttype == TTYPE_NULL)
         return "(null)";
-    String s = make_string();
+    string_t s = make_string();
     switch (ttype) {
         case TTYPE_NULL:
             error("internal error: unknown token type: %d", get_ttype(tok));
