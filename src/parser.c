@@ -23,10 +23,12 @@
 #include <string.h>
 
 #include "c_stackvm.h"
+#include "parser.h"
+#include "dict.h"
+#include "list.h"
 
-#define MAX_ARGS 6
-#define MAX_OP_PRIO 16
-#define MAX_ALIGN 16
+extern void **mkstr;
+extern long mkstr_qty;
 
 List *ctypes = &EMPTY_LIST;
 List *strings = &EMPTY_LIST;
@@ -38,27 +40,17 @@ static Dict *struct_defs = &EMPTY_DICT;
 static Dict *union_defs = &EMPTY_DICT;
 static List *localvars = NULL;
 
-static Ctype *ctype_void = &(Ctype ) { CTYPE_VOID, 0, NULL };
-static Ctype *ctype_int = &(Ctype ) { CTYPE_INT, 4, NULL };
-static Ctype *ctype_long = &(Ctype ) { CTYPE_LONG, 8, NULL };
-static Ctype *ctype_char = &(Ctype ) { CTYPE_CHAR, 1, NULL };
+static Ctype *ctype_void = &(Ctype )  { CTYPE_VOID, 0, NULL };
+static Ctype *ctype_int = &(Ctype )   { CTYPE_INT, 4, NULL };
+static Ctype *ctype_long = &(Ctype )  { CTYPE_LONG, 8, NULL };
+static Ctype *ctype_char = &(Ctype )  { CTYPE_CHAR, 1, NULL };
 static Ctype *ctype_float = &(Ctype ) { CTYPE_FLOAT, 4, NULL };
 #ifdef ALLOW_DOUBLE
 static Ctype *ctype_double = &(Ctype ) { CTYPE_DOUBLE, 8, NULL };
 #endif
 static int labelseq = 0;
 
-static Ast* read_expr(void);
-static Ctype* make_ptr_type(Ctype *ctype);
-static Ctype* make_array_type(Ctype *ctype, int size);
-static Ast* read_compound_stmt(void);
-static Ast* read_decl_or_stmt(void);
-static Ctype* result_type(char op, Ctype *a, Ctype *b);
-static Ctype* convert_array(Ctype *ctype);
-static Ast* read_stmt(void);
-static Ctype* read_decl_int(Token *name);
-
-static Ast* ast_uop(int type, Ctype *ctype, Ast *operand) {
+Ast* ast_uop(int type, Ctype *ctype, Ast *operand) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
@@ -67,7 +59,7 @@ static Ast* ast_uop(int type, Ctype *ctype, Ast *operand) {
     return r;
 }
 
-static Ast* ast_binop(int type, Ast *left, Ast *right) {
+Ast* ast_binop(int type, Ast *left, Ast *right) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = type;
@@ -82,7 +74,7 @@ static Ast* ast_binop(int type, Ast *left, Ast *right) {
     return r;
 }
 
-static Ast* ast_inttype(Ctype *ctype, long val) {
+Ast* ast_inttype(Ctype *ctype, long val) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
@@ -91,7 +83,7 @@ static Ast* ast_inttype(Ctype *ctype, long val) {
     return r;
 }
 
-static Ast* ast_double(double val) {
+Ast* ast_double(double val) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LITERAL;
@@ -112,7 +104,7 @@ char* make_label(void) {
     return get_cstring(s);
 }
 
-static Ast* ast_lvar(Ctype *ctype, char *name) {
+Ast* ast_lvar(Ctype *ctype, char *name) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_LVAR;
@@ -124,7 +116,7 @@ static Ast* ast_lvar(Ctype *ctype, char *name) {
     return r;
 }
 
-static Ast* ast_gvar(Ctype *ctype, char *name, bool filelocal) {
+Ast* ast_gvar(Ctype *ctype, char *name, bool filelocal) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_GVAR;
@@ -135,7 +127,7 @@ static Ast* ast_gvar(Ctype *ctype, char *name, bool filelocal) {
     return r;
 }
 
-static Ast* ast_string(char *str) {
+Ast* ast_string(char *str) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRING;
@@ -145,7 +137,7 @@ static Ast* ast_string(char *str) {
     return r;
 }
 
-static Ast* ast_funcall(Ctype *ctype, char *fname, List *args) {
+Ast* ast_funcall(Ctype *ctype, char *fname, List *args) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNCALL;
@@ -155,7 +147,7 @@ static Ast* ast_funcall(Ctype *ctype, char *fname, List *args) {
     return r;
 }
 
-static Ast* ast_func(Ctype *rettype, char *fname, List *params, Ast *body, List *localvars) {
+Ast* ast_func(Ctype *rettype, char *fname, List *params, Ast *body, List *localvars) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FUNC;
@@ -167,7 +159,7 @@ static Ast* ast_func(Ctype *rettype, char *fname, List *params, Ast *body, List 
     return r;
 }
 
-static Ast* ast_decl(Ast *var, Ast *init) {
+Ast* ast_decl(Ast *var, Ast *init) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_DECL;
@@ -177,7 +169,7 @@ static Ast* ast_decl(Ast *var, Ast *init) {
     return r;
 }
 
-static Ast* ast_array_init(List *arrayinit) {
+Ast* ast_array_init(List *arrayinit) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_ARRAY_INIT;
@@ -186,7 +178,7 @@ static Ast* ast_array_init(List *arrayinit) {
     return r;
 }
 
-static Ast* ast_if(Ast *cond, Ast *then, Ast *els) {
+Ast* ast_if(Ast *cond, Ast *then, Ast *els) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_IF;
@@ -197,7 +189,7 @@ static Ast* ast_if(Ast *cond, Ast *then, Ast *els) {
     return r;
 }
 
-static Ast* ast_ternary(Ctype *ctype, Ast *cond, Ast *then, Ast *els) {
+Ast* ast_ternary(Ctype *ctype, Ast *cond, Ast *then, Ast *els) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_TERNARY;
@@ -208,7 +200,7 @@ static Ast* ast_ternary(Ctype *ctype, Ast *cond, Ast *then, Ast *els) {
     return r;
 }
 
-static Ast* ast_for(Ast *init, Ast *cond, Ast *step, Ast *body) {
+Ast* ast_for(Ast *init, Ast *cond, Ast *step, Ast *body) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_FOR;
@@ -220,7 +212,7 @@ static Ast* ast_for(Ast *init, Ast *cond, Ast *step, Ast *body) {
     return r;
 }
 
-static Ast* ast_return(Ast *retval) {
+Ast* ast_return(Ast *retval) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_RETURN;
@@ -229,7 +221,7 @@ static Ast* ast_return(Ast *retval) {
     return r;
 }
 
-static Ast* ast_compound_stmt(List *stmts) {
+Ast* ast_compound_stmt(List *stmts) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_COMPOUND_STMT;
@@ -238,7 +230,7 @@ static Ast* ast_compound_stmt(List *stmts) {
     return r;
 }
 
-static Ast* ast_struct_ref(Ctype *ctype, Ast *struc, char *name) {
+Ast* ast_struct_ref(Ctype *ctype, Ast *struc, char *name) {
     Ast *r = malloc(sizeof(Ast));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = AST_STRUCT_REF;
@@ -248,7 +240,7 @@ static Ast* ast_struct_ref(Ctype *ctype, Ast *struc, char *name) {
     return r;
 }
 
-static Ctype* make_ptr_type(Ctype *ctype) {
+Ctype* make_ptr_type(Ctype *ctype) {
     Ctype *r = malloc(sizeof(Ctype));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_PTR;
@@ -258,7 +250,7 @@ static Ctype* make_ptr_type(Ctype *ctype) {
     return r;
 }
 
-static Ctype* make_array_type(Ctype *ctype, int len) {
+Ctype* make_array_type(Ctype *ctype, int len) {
     Ctype *r = malloc(sizeof(Ctype));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_ARRAY;
@@ -269,7 +261,7 @@ static Ctype* make_array_type(Ctype *ctype, int len) {
     return r;
 }
 
-static Ctype* make_struct_field_type(Ctype *ctype, int offset) {
+Ctype* make_struct_field_type(Ctype *ctype, int offset) {
     Ctype *r = malloc(sizeof(Ctype));
     add_str_ptr(mkstr, mkstr_qty, r);
     memcpy(r, ctype, sizeof(Ctype));
@@ -278,7 +270,7 @@ static Ctype* make_struct_field_type(Ctype *ctype, int offset) {
     return r;
 }
 
-static Ctype* make_struct_type(Dict *fields, int size) {
+Ctype* make_struct_type(Dict *fields, int size) {
     Ctype *r = malloc(sizeof(Ctype));
     add_str_ptr(mkstr, mkstr_qty, r);
     r->type = CTYPE_STRUCT;
@@ -300,7 +292,7 @@ bool is_flotype(Ctype *ctype) {
 #endif
 }
 
-static void ensure_lvalue(Ast *ast) {
+void ensure_lvalue(Ast *ast) {
     switch (ast->type) {
         case AST_LVAR:
         case AST_GVAR:
@@ -312,21 +304,21 @@ static void ensure_lvalue(Ast *ast) {
     }
 }
 
-static void expect(char punct) {
+void expect(char punct) {
     Token tok = read_token();
     if (!is_punct(tok, punct))
         error("'%c' expected, but got %s", punct, token_to_string(tok));
 }
 
-static bool is_ident(const Token tok, char *s) {
+bool is_ident(const Token tok, char *s) {
     return get_ttype(tok) == TTYPE_IDENT && !strcmp(get_ident(tok), s);
 }
 
-static bool is_right_assoc(const Token tok) {
+bool is_right_assoc(const Token tok) {
     return get_punct(tok) == '=';
 }
 
-static int eval_intexpr(Ast *ast) {
+int eval_intexpr(Ast *ast) {
     switch (ast->type) {
         case AST_LITERAL:
             if (is_inttype(ast->ctype))
@@ -350,7 +342,7 @@ static int eval_intexpr(Ast *ast) {
     }
 }
 
-static int priority(const Token tok) {
+int priority(const Token tok) {
     switch (get_punct(tok)) {
         case '[':
         case '.':
@@ -390,7 +382,7 @@ static int priority(const Token tok) {
     }
 }
 
-static Ast* read_func_args(char *fname) {
+Ast* read_func_args(char *fname) {
     List *args = make_list();
     while (1) {
         Token tok = read_token();
@@ -409,7 +401,7 @@ static Ast* read_func_args(char *fname) {
     return ast_funcall(ctype_int, fname, args);
 }
 
-static Ast* read_ident_or_func(char *name) {
+Ast* read_ident_or_func(char *name) {
     Token tok = read_token();
     if (is_punct(tok, '('))
         return read_func_args(name);
@@ -420,7 +412,7 @@ static Ast* read_ident_or_func(char *name) {
     return v;
 }
 
-static bool is_long_token(char *p) {
+bool is_long_token(char *p) {
     for (; *p; p++) {
         if (!isdigit(*p))
             return (*p == 'L' || *p == 'l') && p[1] == '\0';
@@ -428,14 +420,14 @@ static bool is_long_token(char *p) {
     return false;
 }
 
-static bool is_int_token(char *p) {
+bool is_int_token(char *p) {
     for (; *p; p++)
         if (!isdigit(*p))
             return false;
     return true;
 }
 
-static bool is_float_token(char *p) {
+bool is_float_token(char *p) {
     for (; *p; p++)
         if (!isdigit(*p))
             break;
@@ -447,7 +439,7 @@ static bool is_float_token(char *p) {
     return true;
 }
 
-static Ast* read_prim(void) {
+Ast* read_prim(void) {
     Token tok = read_token();
     switch (get_ttype(tok)) {
         case TTYPE_NULL:
@@ -484,14 +476,7 @@ static Ast* read_prim(void) {
     }
 }
 
-#define swap(a, b)         \
-    {                      \
-        typeof(a) tmp = b; \
-        b = a;             \
-        a = tmp;           \
-    }
-
-static Ctype* result_type_int(jmp_buf *jmpbuf, char op, Ctype *a, Ctype *b) {
+Ctype* result_type_int(jmp_buf *jmpbuf, char op, Ctype *a, Ctype *b) {
     if (a->type > b->type)
         swap(a, b);
     if (b->type == CTYPE_PTR) {
@@ -567,20 +552,20 @@ err:
     longjmp(*jmpbuf, 1);
 }
 
-static Ast* read_subscript_expr(Ast *ast) {
+Ast* read_subscript_expr(Ast *ast) {
     Ast *sub = read_expr();
     expect(']');
     Ast *t = ast_binop('+', ast, sub);
     return ast_uop(AST_DEREF, t->ctype->ptr, t);
 }
 
-static Ctype* convert_array(Ctype *ctype) {
+Ctype* convert_array(Ctype *ctype) {
     if (ctype->type != CTYPE_ARRAY)
         return ctype;
     return make_ptr_type(ctype->ptr);
 }
 
-static Ctype* result_type(char op, Ctype *a, Ctype *b) {
+Ctype* result_type(char op, Ctype *a, Ctype *b) {
     jmp_buf jmpbuf;
     if (setjmp(jmpbuf) == 0)
         return result_type_int(&jmpbuf, op, convert_array(a), convert_array(b));
@@ -588,7 +573,7 @@ static Ctype* result_type(char op, Ctype *a, Ctype *b) {
     return NULL; /* non-reachable */
 }
 
-static Ast* read_unary_expr(void) {
+Ast* read_unary_expr(void) {
     Token tok = read_token();
     if (get_ttype(tok) != TTYPE_PUNCT) {
         unget_token(tok);
@@ -621,14 +606,14 @@ static Ast* read_unary_expr(void) {
     return read_prim();
 }
 
-static Ast* read_cond_expr(Ast *cond) {
+Ast* read_cond_expr(Ast *cond) {
     Ast *then = read_expr();
     expect(':');
     Ast *els = read_expr();
     return ast_ternary(then->ctype, cond, then, els);
 }
 
-static Ast* read_struct_field(Ast *struc) {
+Ast* read_struct_field(Ast *struc) {
     if (struc->ctype->type != CTYPE_STRUCT)
         error("struct expected, but got %s", ast_to_string(struc, true));
     Token name = read_token();
@@ -639,7 +624,7 @@ static Ast* read_struct_field(Ast *struc) {
     return ast_struct_ref(field, struc, ident);
 }
 
-static Ast* read_expr_int(int prec) {
+Ast* read_expr_int(int prec) {
     Ast *ast = read_unary_expr();
     if (!ast)
         return NULL;
@@ -692,11 +677,11 @@ static Ast* read_expr_int(int prec) {
     }
 }
 
-static Ast* read_expr(void) {
+Ast* read_expr(void) {
     return read_expr_int(MAX_OP_PRIO);
 }
 
-static Ctype* get_ctype(const Token tok) {
+Ctype* get_ctype(const Token tok) {
     if (get_ttype(tok) != TTYPE_IDENT)
         return NULL;
     char *ident = get_ident(tok);
@@ -717,11 +702,11 @@ static Ctype* get_ctype(const Token tok) {
     return NULL;
 }
 
-static bool is_type_keyword(const Token tok) {
+bool is_type_keyword(const Token tok) {
     return get_ctype(tok) || is_ident(tok, "struct") || is_ident(tok, "union");
 }
 
-static Ast* read_decl_array_init_int(Ctype *ctype) {
+Ast* read_decl_array_init_int(Ctype *ctype) {
     Token tok = read_token();
     if (ctype->ptr->type == CTYPE_CHAR && get_ttype(tok) == TTYPE_STRING)
         return ast_string(get_strtok(tok));
@@ -743,7 +728,7 @@ static Ast* read_decl_array_init_int(Ctype *ctype) {
     return ast_array_init(initlist);
 }
 
-static char* read_struct_union_tag(void) {
+char* read_struct_union_tag(void) {
     Token tok = read_token();
     if (get_ttype(tok) == TTYPE_IDENT)
         return get_ident(tok);
@@ -751,7 +736,7 @@ static char* read_struct_union_tag(void) {
     return NULL;
 }
 
-static Dict* read_struct_union_fields(void) {
+Dict* read_struct_union_fields(void) {
     Dict *r = make_dict(NULL);
     expect('{');
     while (1) {
@@ -766,7 +751,7 @@ static Dict* read_struct_union_fields(void) {
     return r;
 }
 
-static Ctype* read_union_def(void) {
+Ctype* read_union_def(void) {
     char *tag = read_struct_union_tag();
     Ctype *ctype = dict_get(union_defs, tag);
     if (ctype)
@@ -783,7 +768,7 @@ static Ctype* read_union_def(void) {
     return r;
 }
 
-static Ctype* read_struct_def(void) {
+Ctype* read_struct_def(void) {
     char *tag = read_struct_union_tag();
     Ctype *ctype = dict_get(struct_defs, tag);
     if (ctype)
@@ -804,7 +789,7 @@ static Ctype* read_struct_def(void) {
     return r;
 }
 
-static Ctype* read_decl_spec(void) {
+Ctype* read_decl_spec(void) {
     Token tok = read_token();
     Ctype *ctype = is_ident(tok, "struct") ? read_struct_def() : is_ident(tok, "union") ? read_union_def() : get_ctype(tok);
     if (!ctype)
@@ -819,7 +804,7 @@ static Ctype* read_decl_spec(void) {
     }
 }
 
-static Ast* read_decl_init_val(Ast *var) {
+Ast* read_decl_init_val(Ast *var) {
     if (var->ctype->type == CTYPE_ARRAY) {
         Ast *init = read_decl_array_init_int(var->ctype);
         int len = (init->type == AST_STRING) ? strlen(init->sval) + 1 : list_len(init->arrayinit);
@@ -839,7 +824,7 @@ static Ast* read_decl_init_val(Ast *var) {
     return ast_decl(var, init);
 }
 
-static Ctype* read_array_dimensions_int(Ctype *basetype) {
+Ctype* read_array_dimensions_int(Ctype *basetype) {
     Token tok = read_token();
     if (!is_punct(tok, '[')) {
         unget_token(tok);
@@ -860,12 +845,12 @@ static Ctype* read_array_dimensions_int(Ctype *basetype) {
     return make_array_type(basetype, dim);
 }
 
-static Ctype* read_array_dimensions(Ctype *basetype) {
+Ctype* read_array_dimensions(Ctype *basetype) {
     Ctype *ctype = read_array_dimensions_int(basetype);
     return ctype ? ctype : basetype;
 }
 
-static Ast* read_decl_init(Ast *var) {
+Ast* read_decl_init(Ast *var) {
     Token tok = read_token();
     if (is_punct(tok, '='))
         return read_decl_init_val(var);
@@ -876,7 +861,7 @@ static Ast* read_decl_init(Ast *var) {
     return ast_decl(var, NULL);
 }
 
-static Ctype* read_decl_int(Token *name) {
+Ctype* read_decl_int(Token *name) {
     Ctype *ctype = read_decl_spec();
     *name = read_token();
     if (get_ttype((*name)) != TTYPE_IDENT)
@@ -884,7 +869,7 @@ static Ctype* read_decl_int(Token *name) {
     return read_array_dimensions(ctype);
 }
 
-static Ast* read_decl(void) {
+Ast* read_decl(void) {
     Token varname;
     Ctype *ctype = read_decl_int(&varname);
     if (ctype == ctype_void)
@@ -893,7 +878,7 @@ static Ast* read_decl(void) {
     return read_decl_init(var);
 }
 
-static Ast* read_if_stmt(void) {
+Ast* read_if_stmt(void) {
     expect('(');
     Ast *cond = read_expr();
     expect(')');
@@ -907,7 +892,7 @@ static Ast* read_if_stmt(void) {
     return ast_if(cond, then, els);
 }
 
-static Ast* read_opt_decl_or_stmt(void) {
+Ast* read_opt_decl_or_stmt(void) {
     Token tok = read_token();
     if (is_punct(tok, ';'))
         return NULL;
@@ -915,7 +900,7 @@ static Ast* read_opt_decl_or_stmt(void) {
     return read_decl_or_stmt();
 }
 
-static Ast* read_opt_expr(void) {
+Ast* read_opt_expr(void) {
     Token tok = read_token();
     if (is_punct(tok, ';'))
         return NULL;
@@ -925,7 +910,7 @@ static Ast* read_opt_expr(void) {
     return r;
 }
 
-static Ast* read_for_stmt(void) {
+Ast* read_for_stmt(void) {
     expect('(');
     localenv = make_dict(localenv);
     Ast *init = read_opt_decl_or_stmt();
@@ -937,13 +922,13 @@ static Ast* read_for_stmt(void) {
     return ast_for(init, cond, step, body);
 }
 
-static Ast* read_return_stmt(void) {
+Ast* read_return_stmt(void) {
     Ast *retval = read_expr();
     expect(';');
     return ast_return(retval);
 }
 
-static Ast* read_stmt(void) {
+Ast* read_stmt(void) {
     Token tok = read_token();
     if (is_ident(tok, "if"))
         return read_if_stmt();
@@ -959,14 +944,14 @@ static Ast* read_stmt(void) {
     return r;
 }
 
-static Ast* read_decl_or_stmt(void) {
+Ast* read_decl_or_stmt(void) {
     Token tok = peek_token();
     if (get_ttype(tok) == TTYPE_NULL)
         return NULL;
     return is_type_keyword(tok) ? read_decl() : read_stmt();
 }
 
-static Ast* read_compound_stmt(void) {
+Ast* read_compound_stmt(void) {
     localenv = make_dict(localenv);
     List *list = make_list();
     while (1) {
@@ -984,7 +969,7 @@ static Ast* read_compound_stmt(void) {
     return ast_compound_stmt(list);
 }
 
-static List* read_params(void) {
+List* read_params(void) {
     List *params = make_list();
     Token tok = read_token();
     if (is_punct(tok, ')'))
@@ -1007,7 +992,7 @@ static List* read_params(void) {
     }
 }
 
-static Ast* read_func_def(Ctype *rettype, char *fname) {
+Ast* read_func_def(Ctype *rettype, char *fname) {
     expect('(');
     localenv = make_dict(globalenv);
     List *params = read_params();
@@ -1022,7 +1007,7 @@ static Ast* read_func_def(Ctype *rettype, char *fname) {
     return r;
 }
 
-static Ast* read_decl_or_func_def(void) {
+Ast* read_decl_or_func_def(void) {
     Token tok = peek_token();
     if (get_ttype(tok) == TTYPE_NULL)
         return NULL;

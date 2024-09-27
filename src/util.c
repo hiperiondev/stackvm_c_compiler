@@ -1,5 +1,5 @@
 /*
- * @util.h
+ * @util.c
  *
  * @brief C for Stack VM
  * @details
@@ -15,34 +15,29 @@
  * @see https://github.com/hiperiondev/stackvm_c_compiler
  */
 
-#ifndef UTIL_H
-#define UTIL_H
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
+#include "util.h"
 #include "list.h"
 
-extern void **mkstr;
-extern long mkstr_qty;
-
-#define add_str_ptr(list, qty, ptr)                        \
-            list[qty++] = (void*)(ptr);                    \
-            list = realloc(list, (qty + 1) * sizeof(void*))
-
-typedef struct {
-    char *body;
-    int nalloc, len;
-} String;
+void **mkstr = NULL;
+long mkstr_qty = 0;
 
 static List *cstrings = &EMPTY_LIST;
 
-#define INIT_SIZE 8
+void free_all(void) {
+    for (long n = 0; n < mkstr_qty; n++) {
+        if (mkstr[n] != NULL)
+            free(mkstr[n]);
+        mkstr[n] = NULL;
+    }
+}
 
-inline void lfree(void *ptr) {
+void lfree(void *ptr) {
     long pos = LONG_MAX;
 
     for (long n = 0; n < mkstr_qty; n++)
@@ -58,17 +53,13 @@ inline void lfree(void *ptr) {
     free(ptr);
 }
 
-static inline String make_string(void) {
-    String ret = {
-            .body = calloc(1, INIT_SIZE),
-            .nalloc = INIT_SIZE,
-            .len = 0,
-    };
+String make_string(void) {
+    String ret = { .body = calloc(1, INIT_SIZE), .nalloc = INIT_SIZE, .len = 0, };
 
     return ret;
 }
 
-static inline void realloc_body(String *s) {
+void realloc_body(String *s) {
     int newsize = s->nalloc * 2;
 
     char *body = realloc(s->body, newsize);
@@ -79,13 +70,13 @@ static inline void realloc_body(String *s) {
 
 }
 
-static inline char* get_cstring(const String s) {
+char* get_cstring(const String s) {
     char *r = s.body;
     list_push(cstrings, r);
     return r;
 }
 
-static inline void string_append(String *s, char c) {
+void string_append(String *s, char c) {
     long pos = LONG_MAX;
 
     if (s->nalloc == (s->len + 1)) {
@@ -104,7 +95,7 @@ static inline void string_append(String *s, char c) {
     s->body[s->len] = '\0';
 }
 
-static inline void string_appendf(String *s, char *fmt, ...) {
+void string_appendf(String *s, char *fmt, ...) {
     va_list args;
     long pos = LONG_MAX;
     while (1) {
@@ -130,25 +121,18 @@ static inline void string_appendf(String *s, char *fmt, ...) {
     }
 }
 
-#define error(...) errorf(__FILE__, __LINE__, __VA_ARGS__)
-
-#define assert(expr)                           \
-    do {                                       \
-        if (!(expr))                           \
-            error("Assertion failed: " #expr); \
-    } while (0)
-
-static inline void errorf(char *file, int line, char *fmt, ...) {
+void errorf(char *file, int line, char *fmt, ...) {
     fprintf(stderr, "%s:%d: ", file, line);
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     fprintf(stderr, "\n");
     va_end(args);
+    free_all();
     exit(1);
 }
 
-static inline char* quote_cstring(char *p) {
+char* quote_cstring(char *p) {
     String s = make_string();
     for (; *p; p++) {
         if (*p == '\"' || *p == '\\')
@@ -160,5 +144,3 @@ static inline char* quote_cstring(char *p) {
     }
     return get_cstring(s);
 }
-
-#endif /* UTIL_H */

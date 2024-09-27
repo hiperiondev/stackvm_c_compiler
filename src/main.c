@@ -18,7 +18,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "util.h"
 #include "c_stackvm.h"
 
 static char *outfile = NULL, *infile = NULL;
@@ -126,11 +128,7 @@ int main(int argc, char **argv) {
     emit_data_section();
     printf("\n----------------------\n");
 
-    for (long n = 0; n < mkstr_qty; n++) {
-        if (mkstr[n] != NULL)
-            free(mkstr[n]);
-        mkstr[n] = NULL;
-    }
+    free_all();
 
     free(mkstr);
     fclose(outfp);

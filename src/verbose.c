@@ -16,18 +16,15 @@
  */
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "c_stackvm.h"
+#include "verbose.h"
 
-#define TAB_LEN 4
-
-#define it tab+=TAB_LEN
-#define dt tab-=TAB_LEN
-
-int tab = 0;
-bool cont = false;
-bool excpt = false;
-bool no_break = false;
+static int tab = 0;
+static bool cont = false;
+static bool excpt = false;
+static bool no_break = false;
 
 char* ctype_to_string(Ctype *ctype) {
     if (!ctype)
@@ -72,13 +69,13 @@ char* ctype_to_string(Ctype *ctype) {
     }
 }
 
-static void uop_to_string(String *buf, char *op, Ast *ast) {
+void uop_to_string(String *buf, char *op, Ast *ast) {
     char *aststr = ast_to_string(ast->operand, true);
     string_appendf(buf, "(%s %s)", op, aststr);
     lfree(aststr);
 }
 
-static void binop_to_string(String *buf, char *op, Ast *ast) {
+void binop_to_string(String *buf, char *op, Ast *ast) {
     char *aststr1 = ast_to_string(ast->left, true);
     char *aststr2 = ast_to_string(ast->right, true);
     string_appendf(buf, "(%s %s %s)", op, aststr1, aststr2);
@@ -86,7 +83,7 @@ static void binop_to_string(String *buf, char *op, Ast *ast) {
     lfree(aststr2);
 }
 
-static void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
+void ast_to_string_int(String *buf, Ast *ast, bool first_entry) {
     if (!ast) {
         string_appendf(buf, "(nil)");
         return;

@@ -1,5 +1,5 @@
 /*
- * @codegenir.c
+ * @codegen_ir.c
  *
  * @brief C for Stack VM
  * @details
@@ -19,23 +19,17 @@
 #include <stdio.h>
 
 #include "c_stackvm.h"
+#include "codegen_ir.h"
 
 static int TAB = 8;
 FILE *outfp;
 static List *functions = &EMPTY_LIST;
 
-#define emit(...) emitf(__LINE__, "\t" __VA_ARGS__)
-#define emit_label(...) emitf(__LINE__, __VA_ARGS__)
-#define UNUSED __attribute__((unused))
-#define SAVE()                                                   \
-    int save_hook __attribute__((cleanup(pop_function))) UNUSED; \
-    list_push(functions, (void *) __func__)
-
-static void pop_function(void *ignore UNUSED) {
+void pop_function(void *ignore UNUSED) {
     list_pop(functions);
 }
 
-static char* get_caller_list(void) {
+char* get_caller_list(void) {
     String s = make_string();
     for (Iter i = list_iter(functions); !iter_end(i);) {
         string_appendf(&s, "%s", iter_next(&i));
@@ -45,7 +39,7 @@ static char* get_caller_list(void) {
     return get_cstring(s);
 }
 
-static void emitf(int line, char *fmt, ...) {
+void emitf(int line, char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
     int col = vfprintf(outfp, fmt, args);

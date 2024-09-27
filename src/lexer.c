@@ -20,21 +20,15 @@
 #include <stdlib.h>
 
 #include "c_stackvm.h"
-
-#define make_null(x)    make_token(TTYPE_NULL,   (uintptr_t) 0)
-#define make_strtok(x)  make_token(TTYPE_STRING, (uintptr_t) get_cstring(x))
-#define make_ident(x)   make_token(TTYPE_IDENT,  (uintptr_t) get_cstring(x))
-#define make_punct(x)   make_token(TTYPE_PUNCT,  (uintptr_t)(x))
-#define make_number(x)  make_token(TTYPE_NUMBER, (uintptr_t)(x))
-#define make_char(x)    make_token(TTYPE_CHAR,   (uintptr_t)(x))
+#include "lexer.h"
 
 static bool ungotten = false;
 static Token ungotten_buf = { 0 };
 
-void **mkstr = NULL;
-long mkstr_qty = 0;
+extern void **mkstr;
+extern long mkstr_qty;
 
-static Token make_token(enum TokenType type, uintptr_t data) {
+Token make_token(enum TokenType type, uintptr_t data) {
     Token ret = {
             .type = type,
             .priv = data,
@@ -42,7 +36,7 @@ static Token make_token(enum TokenType type, uintptr_t data) {
     return ret;
 }
 
-static int getc_nonspace(void) {
+int getc_nonspace(void) {
     int c;
     while ((c = getc(stdin)) != EOF) {
         if (isspace(c) || c == '\n' || c == '\r')
@@ -52,7 +46,7 @@ static int getc_nonspace(void) {
     return EOF;
 }
 
-static Token read_number(char c) {
+Token read_number(char c) {
     String s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
@@ -66,7 +60,7 @@ static Token read_number(char c) {
     }
 }
 
-static Token read_char(void) {
+Token read_char(void) {
     char c = getc(stdin);
     if (c == EOF)
         goto err;
@@ -86,7 +80,7 @@ err:
     return make_null(); /* non-reachable */
 }
 
-static Token read_string(void) {
+Token read_string(void) {
     String s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     while (1) {
@@ -114,7 +108,7 @@ static Token read_string(void) {
     return make_strtok(s);
 }
 
-static Token read_ident(char c) {
+Token read_ident(char c) {
     String s = make_string();
     add_str_ptr(mkstr, mkstr_qty, s.body);
     string_append(&s, c);
@@ -129,7 +123,7 @@ static Token read_ident(char c) {
     }
 }
 
-static void skip_line_comment(void) {
+void skip_line_comment(void) {
     while (1) {
         int c = getc(stdin);
         if (c == '\n' || c == EOF)
@@ -137,7 +131,7 @@ static void skip_line_comment(void) {
     }
 }
 
-static void skip_block_comment(void) {
+void skip_block_comment(void) {
     enum {
         in_comment, asterisk_read
     } state = in_comment;
@@ -152,7 +146,7 @@ static void skip_block_comment(void) {
     }
 }
 
-static Token read_rep(int expect, int t1, int t2) {
+Token read_rep(int expect, int t1, int t2) {
     int c = getc(stdin);
     if (c == expect)
         return make_punct(t2);
@@ -160,7 +154,7 @@ static Token read_rep(int expect, int t1, int t2) {
     return make_punct(t1);
 }
 
-static Token read_token_int(void) {
+Token read_token_int(void) {
     int c = getc_nonspace();
     switch (c) {
         case '0' ... '9':
