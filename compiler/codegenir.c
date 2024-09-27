@@ -24,7 +24,6 @@
 #include "list.h"
 #include "codegenir.h"
 
-static int TAB = 8;
 FILE *outfp;
 static list_t *functions = &list_empty;
 extern list_t *strings;
@@ -52,9 +51,11 @@ void codegenir_emitf(int line, char *fmt, ...) {
 
     for (char *p = fmt; *p; p++)
         if (*p == '\t')
-            col += TAB - 1;
-    int space = (28 - col) > 0 ? (30 - col) : 2;
-    fprintf(outfp, "%*c %s:%d\n", space, '#', codegenir_get_caller_list(), line);
+            col += TAB_LEN - 1;
+
+    //int space = (28 - col) > 0 ? (30 - col) : 2;
+    //fprintf(outfp, "%*c %s:%d\n", space, '#', codegenir_get_caller_list(), line);
+    fprintf(outfp, "\n");
 }
 
 void codegenir_emit_data_section(void) {

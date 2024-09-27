@@ -19,13 +19,6 @@
 #define VERBOSE_H_
 
 /**
- * @def TAB_LEN
- * @brief
- *
- */
-#define TAB_LEN 4
-
-/**
  * @def it
  * @brief
  *

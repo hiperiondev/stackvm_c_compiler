@@ -28,6 +28,13 @@
 #include "util.h"
 
 /**
+ * @def TAB_LEN
+ * @brief
+ *
+ */
+#define TAB_LEN 4
+
+/**
  * @enum token_type
  * @brief
  *
