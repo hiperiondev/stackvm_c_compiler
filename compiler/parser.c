@@ -22,10 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "list.h"
 #include "c_stackvm.h"
 #include "parser.h"
 #include "dict.h"
-#include "list.h"
 #include "verbose.h"
 #include "lexer.h"
 
@@ -36,10 +36,10 @@ list_t *ctypes = &EMPTY_LIST;
 list_t *strings = &EMPTY_LIST;
 list_t *flonums = &EMPTY_LIST;
 
-static dict_t *globalenv = &EMPTY_DICT;
+static dict_t *globalenv = &list_empty_dict;
 static dict_t *localenv = NULL;
-static dict_t *struct_defs = &EMPTY_DICT;
-static dict_t *union_defs = &EMPTY_DICT;
+static dict_t *struct_defs = &list_empty_dict;
+static dict_t *union_defs = &list_empty_dict;
 static list_t *localvars = NULL;
 
 static ctype_t *ctype_void = &(ctype_t )  { CTYPE_VOID, 0, NULL };

@@ -59,21 +59,21 @@ void codegenir_emitf(int line, char *fmt, ...) {
 
 void codegenir_emit_data_section(void) {
     SAVE();
-    emit(".data");
+    codegenir_emit(".data");
     for (iter_t i = list_iter(strings); !list_iter_end(i);) {
         ast_t *v = list_iter_next(&i);
-        emit_label("%s:", v->slabel);
+        codegenir_emit_label("%s:", v->slabel);
         char *cstr = util_quote_cstring(v->sval);
-        emit(".string \"%s\"", cstr);
+        codegenir_emit(".string \"%s\"", cstr);
         util_lfree(cstr);
     }
     for (iter_t i = list_iter(flonums); !list_iter_end(i);) {
         ast_t *v = list_iter_next(&i);
         char *label = parser_make_label();
         v->flabel = label;
-        emit_label("%s:", label);
-        emit(".long %d", v->lval[0]);
-        emit(".long %d", v->lval[1]);
+        codegenir_emit_label("%s:", label);
+        codegenir_emit(".long %d", v->lval[0]);
+        codegenir_emit(".long %d", v->lval[1]);
     }
 }
 
