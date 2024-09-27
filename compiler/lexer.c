@@ -81,10 +81,10 @@ token_t lexer_read_char(void) {
     if (c2 == EOF)
         goto err;
     if (c2 != '\'')
-        error("Malformed char literal");
+        util_error("Malformed char literal");
     return lexer_make_char(c);
 err:
-    error("Unterminated char");
+    util_error("Unterminated char");
     return lexer_make_null(); /* non-reachable */
 }
 
@@ -94,21 +94,22 @@ token_t lexer_read_string(void) {
     while (1) {
         int c = getc(stdin);
         if (c == EOF)
-            error("Unterminated string");
+            util_error("Unterminated string");
         if (c == '"')
             break;
         if (c == '\\') {
             c = getc(stdin);
             switch (c) {
                 case EOF:
-                    error("Unterminated \\");
+                    util_error("Unterminated \\");
+                    break;
                 case '\"':
                     break;
                 case 'n':
                     c = '\n';
                     break;
                 default:
-                    error("Unknown quote: %c", c);
+                    util_error("Unknown quote: %c", c);
             }
         }
         util_string_append(&s, c);
@@ -225,7 +226,7 @@ token_t lexer_read_token_int(void) {
         case EOF:
             return lexer_make_null();
         default:
-            error("Unexpected character: '%c'", c);
+            util_error("Unexpected character: '%c'", c);
             return lexer_make_null(); /* non-reachable */
     }
 }
@@ -238,7 +239,7 @@ void lexer_unget_token(const token_t tok) {
     if (get_ttype(tok) == TTYPE_NULL)
         return;
     if (ungotten)
-        error("Push back buffer is already full");
+        util_error("Push back buffer is already full");
     ungotten = true;
     ungotten_buf = lexer_make_token(tok.type, tok.priv);
 }

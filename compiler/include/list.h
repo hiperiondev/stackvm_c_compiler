@@ -21,11 +21,11 @@
 #include <stdbool.h>
 
 /**
- * @def EMPTY_LIST
+ * @def list_empty
  * @brief
  *
  */
-#define EMPTY_LIST ((list_t){.len = 0, .head = NULL, .tail = NULL})
+#define list_empty ((list_t){.len = 0, .head = NULL, .tail = NULL})
 
 /**
  * @def list_safe_next

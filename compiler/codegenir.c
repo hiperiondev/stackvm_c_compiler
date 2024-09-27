@@ -26,7 +26,7 @@
 
 static int TAB = 8;
 FILE *outfp;
-static list_t *functions = &EMPTY_LIST;
+static list_t *functions = &list_empty;
 extern list_t *strings;
 extern list_t *flonums;
 

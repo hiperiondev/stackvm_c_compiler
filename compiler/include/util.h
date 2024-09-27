@@ -35,11 +35,11 @@
             list = realloc(list, (qty + 1) * sizeof(void*))
 
 /**
- * @def error
+ * @def util_error
  * @brief
  *
  */
-#define error(...) util_errorf(__FILE__, __LINE__, __VA_ARGS__)
+#define util_error(...) util_errorf(__FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * @def assert
@@ -49,7 +49,7 @@
 #define assert(expr)                           \
     do {                                       \
         if (!(expr))                           \
-            error("Assertion failed: " #expr); \
+            util_error("Assertion failed: " #expr); \
     } while (0)
 
 /**

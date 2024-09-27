@@ -35,7 +35,7 @@ typedef struct dict_s {
  * @brief
  *
  */
-#define list_empty_dict ((dict_t){&EMPTY_LIST, NULL})
+#define list_empty_dict ((dict_t){&list_empty, NULL})
 
 /**
  * @struct

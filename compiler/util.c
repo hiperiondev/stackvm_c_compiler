@@ -27,7 +27,7 @@
 void **mkstr = NULL;
 long mkstr_qty = 0;
 
-static list_t *cstrings = &EMPTY_LIST;
+static list_t *cstrings = &list_empty;
 
 void util_free_all(void) {
     for (long n = 0; n < mkstr_qty; n++) {

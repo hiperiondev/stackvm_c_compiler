@@ -65,7 +65,7 @@ char* ctype_to_string(ctype_t *ctype) {
             return util_get_cstring(s);
         }
         default:
-            error("Unknown ctype: %d", ctype);
+            util_error("Unknown ctype: %d", ctype);
             return NULL; /* non-reachable */
     }
 }
@@ -124,7 +124,7 @@ void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
                     util_string_appendf(buf, "%f", ast->fval);
                     break;
                 default:
-                    error("internal error");
+                    util_error("internal error");
             }
             break;
         case AST_STRING: {
@@ -346,7 +346,8 @@ char* token_to_string(const token_t tok) {
     string_t s = util_make_string();
     switch (ttype) {
         case TTYPE_NULL:
-            error("internal error: unknown token type: %d", get_ttype(tok));
+            util_error("internal error: unknown token type: %d", get_ttype(tok));
+            break;
         case TTYPE_IDENT:
             return get_ident(tok);
         case TTYPE_PUNCT:
@@ -364,6 +365,6 @@ char* token_to_string(const token_t tok) {
             util_string_appendf(&s, "\"%s\"", get_strtok(tok));
             return util_get_cstring(s);
     }
-    error("internal error: unknown token type: %d", get_ttype(tok));
+    util_error("internal error: unknown token type: %d", get_ttype(tok));
     return NULL; /* non-reachable */
 }
