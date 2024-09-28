@@ -285,7 +285,7 @@ void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
         case AST_DEREF:
             uop_to_string(buf, "(DEREF)", ast);
             break;
-        case PUNCT_INC:
+        case PUNCT_POSTINC:
             if (!(cont || first_entry)) {
                 util_string_appendf(buf, "%*s", tab, "");
             }
@@ -297,7 +297,7 @@ void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
             }
             uop_to_string(buf, "PREINC", ast);
             break;
-        case PUNCT_DEC:
+        case PUNCT_POSTDEC:
             if (!(cont || first_entry)) {
                 util_string_appendf(buf, "%*s", tab, "");
             }

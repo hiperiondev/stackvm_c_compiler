@@ -682,7 +682,10 @@ ast_t* parser_read_expr_int(int prec) {
         }
         if (lexer_is_punct(tok, PUNCT_INC) || lexer_is_punct(tok, PUNCT_DEC)) {
             parser_ensure_lvalue(ast);
-            ast = parser_ast_uop(get_punct(tok), ast->ctype, ast);
+            if (lexer_is_punct(tok, PUNCT_INC))
+                ast = parser_ast_uop(PUNCT_POSTINC, ast->ctype, ast);
+            else
+                ast = parser_ast_uop(PUNCT_POSTDEC, ast->ctype, ast);
             continue;
         }
         if (lexer_is_punct(tok, '='))
