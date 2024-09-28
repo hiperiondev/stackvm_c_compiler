@@ -589,6 +589,14 @@ ast_t* parser_read_unary_expr(void) {
         lexer_unget_token(tok);
         return parser_read_prim();
     }
+    if (lexer_is_punct(tok, PUNCT_INC)) {
+        ast_t *operand = parser_read_unary_expr();
+        return parser_ast_uop(PUNCT_PREINC, ctype_int, operand);
+    }
+    if (lexer_is_punct(tok, PUNCT_DEC)) {
+        ast_t *operand = parser_read_unary_expr();
+        return parser_ast_uop(PUNCT_PREDEC, ctype_int, operand);
+    }
     if (lexer_is_punct(tok, '(')) {
         ast_t *r = parser_read_expr();
         parser_expect(')');
@@ -668,7 +676,6 @@ ast_t* parser_read_expr_int(int prec) {
             ast = parser_read_subscript_expr(ast);
             continue;
         }
-        // this is BUG!! ++ should be in read_unary_expr() , I think.
         if (lexer_is_punct(tok, PUNCT_INC) || lexer_is_punct(tok, PUNCT_DEC)) {
             parser_ensure_lvalue(ast);
             ast = parser_ast_uop(get_punct(tok), ast->ctype, ast);

@@ -88,6 +88,8 @@ enum {
     PUNCT_ARROW,      /**< PUNCT_ARROW */
     PUNCT_LSHIFT,     /**< PUNCT_LSHIFT */
     PUNCT_RSHIFT,     /**< PUNCT_RSHIFT */
+    PUNCT_PREINC,     /**< PUNCT_PREINC */
+    PUNCT_PREDEC,     /**< PUNCT_PREDEC */
 };
 
 /**

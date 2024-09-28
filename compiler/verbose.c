@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "c_stackvm.h"
 #include "verbose.h"
@@ -279,10 +280,28 @@ void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
             uop_to_string(buf, "(DEREF)", ast);
             break;
         case PUNCT_INC:
-            uop_to_string(buf, "++", ast);
+            if (!(cont || first_entry)) {
+                util_string_appendf(buf, "%*s", tab, "");
+            }
+            uop_to_string(buf, "POSTINC", ast);
+            break;
+        case PUNCT_PREINC:
+            if (!(cont || first_entry)) {
+                util_string_appendf(buf, "%*s", tab, "");
+            }
+            uop_to_string(buf, "PREINC", ast);
             break;
         case PUNCT_DEC:
-            uop_to_string(buf, "--", ast);
+            if (!(cont || first_entry)) {
+                util_string_appendf(buf, "%*s", tab, "");
+            }
+            uop_to_string(buf, "POSTDEC", ast);
+            break;
+        case PUNCT_PREDEC:
+            if (!(cont || first_entry)) {
+                util_string_appendf(buf, "%*s", tab, "");
+            }
+            uop_to_string(buf, "PREDEC", ast);
             break;
         case PUNCT_LOGAND:
             binop_to_string(buf, "and", ast);
@@ -341,6 +360,7 @@ char* ast_to_string(ast_t *ast, bool first_entry) {
 
 char* token_to_string(const token_t tok) {
     enum token_type ttype = get_ttype(tok);
+
     if (ttype == TTYPE_NULL)
         return "(null)";
     string_t s = util_make_string();
@@ -365,6 +385,7 @@ char* token_to_string(const token_t tok) {
             util_string_appendf(&s, "\"%s\"", get_strtok(tok));
             return util_get_cstring(s);
     }
+
     util_error("internal error: unknown token type: %d", get_ttype(tok));
     return NULL; /* non-reachable */
 }

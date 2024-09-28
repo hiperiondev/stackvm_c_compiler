@@ -1,6 +1,10 @@
 int main()
 {
 int i = 20;
-++i;
+int j = ++i;
+i++;
+--j;
+i = j * i++;
+j = i * --j;
 return 0;
 }
