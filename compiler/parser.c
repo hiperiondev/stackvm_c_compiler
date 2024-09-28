@@ -45,7 +45,9 @@ static list_t *localvars = NULL;
 static ctype_t *ctype_void = &(ctype_t )  { CTYPE_VOID,  0, NULL };
 static ctype_t *ctype_int = &(ctype_t )   { CTYPE_INT,   4, NULL };
 static ctype_t *ctype_uint = &(ctype_t )  { CTYPE_UINT,  4, NULL };
+#ifdef ALLOW_LONG
 static ctype_t *ctype_long = &(ctype_t )  { CTYPE_LONG,  8, NULL };
+#endif
 static ctype_t *ctype_char = &(ctype_t )  { CTYPE_CHAR,  1, NULL };
 static ctype_t *ctype_float = &(ctype_t ) { CTYPE_FLOAT, 4, NULL };
 #ifdef ALLOW_DOUBLE
@@ -284,7 +286,11 @@ ctype_t* parser_make_struct_type(dict_t *fields, int size) {
 }
 
 bool parser_is_inttype(ctype_t *ctype) {
+#ifdef ALLOW_LONG
     return ctype->type == CTYPE_CHAR || ctype->type == CTYPE_INT || ctype->type == CTYPE_LONG || ctype->type == CTYPE_UINT;
+#else
+    return ctype->type == CTYPE_CHAR || ctype->type == CTYPE_INT || ctype->type == CTYPE_UINT;
+#endif
 }
 
 bool parser_is_flotype(ctype_t *ctype) {
@@ -455,11 +461,21 @@ ast_t* parser_read_prim(void) {
         case TTYPE_NUMBER: {
             char *number = get_number(tok);
             if (parser_is_long_token(number))
+#ifdef ALLOW_LONG
                 return parser_ast_inttype(ctype_long, atol(number));
+#else
+                return parser_ast_inttype(ctype_int, atoi(number));
+#endif
             if (parser_is_int_token(number)) {
+#ifdef ALLOW_LONG
                 long val = atol(number);
                 if (val & ~(long) UINT_MAX)
                     return parser_ast_inttype(ctype_long, val);
+#else
+                int val = atoi(number);
+                if (val & ~(int) UINT_MAX)
+                    return parser_ast_inttype(ctype_int, val);
+#endif
                 return parser_ast_inttype(ctype_int, val);
             }
             if (parser_is_float_token(number))
@@ -509,8 +525,10 @@ ctype_t* parser_result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b
                 case CTYPE_CHAR:
                 case CTYPE_INT:
                     return ctype_int;
+#ifdef ALLOW_LONG
                 case CTYPE_LONG:
                     return ctype_long;
+#endif
                 case CTYPE_FLOAT:
 #ifdef ALLOW_DOUBLE
                 case CTYPE_DOUBLE:
@@ -523,6 +541,7 @@ ctype_t* parser_result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b
             }
             util_error("internal error");
             break;
+#ifdef ALLOW_LONG
         case CTYPE_LONG:
             switch (b->type) {
                 case CTYPE_LONG:
@@ -540,6 +559,7 @@ ctype_t* parser_result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b
             }
             util_error("internal error");
             break;
+#endif
         case CTYPE_FLOAT:
 #ifdef ALLOW_DOUBLE
             if (b->type == CTYPE_FLOAT || b->type == CTYPE_DOUBLE)
@@ -715,8 +735,10 @@ ctype_t* parser_get_ctype(const token_t tok) {
         return ctype_int;
     if (!strcmp(ident, "uint"))
         return ctype_uint;
+#ifdef ALLOW_LONG
     if (!strcmp(ident, "long"))
         return ctype_long;
+#endif
     if (!strcmp(ident, "char"))
         return ctype_char;
     if (!strcmp(ident, "float"))

@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 //#define ALLOW_DOUBLE
+//#define ALLOW_LONG
 
 #include "dict.h"
 #include "list.h"
@@ -103,7 +104,9 @@ enum {
     CTYPE_VOID,    /**< CTYPE_VOID */
     CTYPE_CHAR,    /**< CTYPE_CHAR */
     CTYPE_INT,     /**< CTYPE_INT */
+#ifdef ALLOW_LONG
     CTYPE_LONG,    /**< CTYPE_LONG */
+#endif
     CTYPE_FLOAT,   /**< CTYPE_FLOAT */
     CTYPE_UINT,    /**< CTYPE_UINT */
 #ifdef ALLOW_DOUBLE
