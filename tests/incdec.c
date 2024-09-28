@@ -1,6 +1,6 @@
 int main()
 {
-int i = 20;
+uint i = 20;
 int j = ++i;
 i++;
 --j;

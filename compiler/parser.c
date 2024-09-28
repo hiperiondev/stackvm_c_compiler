@@ -42,10 +42,11 @@ static dict_t *struct_defs = &list_empty_dict;
 static dict_t *union_defs = &list_empty_dict;
 static list_t *localvars = NULL;
 
-static ctype_t *ctype_void = &(ctype_t )  { CTYPE_VOID, 0, NULL };
-static ctype_t *ctype_int = &(ctype_t )   { CTYPE_INT, 4, NULL };
-static ctype_t *ctype_long = &(ctype_t )  { CTYPE_LONG, 8, NULL };
-static ctype_t *ctype_char = &(ctype_t )  { CTYPE_CHAR, 1, NULL };
+static ctype_t *ctype_void = &(ctype_t )  { CTYPE_VOID,  0, NULL };
+static ctype_t *ctype_int = &(ctype_t )   { CTYPE_INT,   4, NULL };
+static ctype_t *ctype_uint = &(ctype_t )  { CTYPE_UINT,  4, NULL };
+static ctype_t *ctype_long = &(ctype_t )  { CTYPE_LONG,  8, NULL };
+static ctype_t *ctype_char = &(ctype_t )  { CTYPE_CHAR,  1, NULL };
 static ctype_t *ctype_float = &(ctype_t ) { CTYPE_FLOAT, 4, NULL };
 #ifdef ALLOW_DOUBLE
 static ctype_t *ctype_double = &(ctype_t ) { CTYPE_DOUBLE, 8, NULL };
@@ -283,7 +284,7 @@ ctype_t* parser_make_struct_type(dict_t *fields, int size) {
 }
 
 bool parser_is_inttype(ctype_t *ctype) {
-    return ctype->type == CTYPE_CHAR || ctype->type == CTYPE_INT || ctype->type == CTYPE_LONG;
+    return ctype->type == CTYPE_CHAR || ctype->type == CTYPE_INT || ctype->type == CTYPE_LONG || ctype->type == CTYPE_UINT;
 }
 
 bool parser_is_flotype(ctype_t *ctype) {
@@ -501,7 +502,10 @@ ctype_t* parser_result_type_int(jmp_buf *jmpbuf, char op, ctype_t *a, ctype_t *b
             goto err;
         case CTYPE_CHAR:
         case CTYPE_INT:
+        case CTYPE_UINT:
             switch (b->type) {
+                case CTYPE_UINT:
+                    return ctype_uint;
                 case CTYPE_CHAR:
                 case CTYPE_INT:
                     return ctype_int;
@@ -706,6 +710,8 @@ ctype_t* parser_get_ctype(const token_t tok) {
         return ctype_void;
     if (!strcmp(ident, "int"))
         return ctype_int;
+    if (!strcmp(ident, "uint"))
+        return ctype_uint;
     if (!strcmp(ident, "long"))
         return ctype_long;
     if (!strcmp(ident, "char"))

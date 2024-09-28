@@ -64,32 +64,32 @@ typedef struct {
  *
  */
 enum {
-    AST_LITERAL = 256,/**< AST_LITERAL */
-    AST_STRING,       /**< AST_STRING */
-    AST_LVAR,         /**< AST_LVAR */
-    AST_GVAR,         /**< AST_GVAR */
-    AST_FUNCALL,      /**< AST_FUNCALL */
-    AST_FUNC,         /**< AST_FUNC */
-    AST_DECL,         /**< AST_DECL */
-    AST_ARRAY_INIT,   /**< AST_ARRAY_INIT */
-    AST_ADDR,         /**< AST_ADDR */
-    AST_DEREF,        /**< AST_DEREF */
-    AST_IF,           /**< AST_IF */
-    AST_TERNARY,      /**< AST_TERNARY */
-    AST_FOR,          /**< AST_FOR */
-    AST_RETURN,       /**< AST_RETURN */
-    AST_COMPOUND_STMT,/**< AST_COMPOUND_STMT */
-    AST_STRUCT_REF,   /**< AST_STRUCT_REF */
-    PUNCT_EQ,         /**< PUNCT_EQ */
-    PUNCT_INC,        /**< PUNCT_INC */
-    PUNCT_DEC,        /**< PUNCT_DEC */
-    PUNCT_LOGAND,     /**< PUNCT_LOGAND */
-    PUNCT_LOGOR,      /**< PUNCT_LOGOR */
-    PUNCT_ARROW,      /**< PUNCT_ARROW */
-    PUNCT_LSHIFT,     /**< PUNCT_LSHIFT */
-    PUNCT_RSHIFT,     /**< PUNCT_RSHIFT */
-    PUNCT_PREINC,     /**< PUNCT_PREINC */
-    PUNCT_PREDEC,     /**< PUNCT_PREDEC */
+    AST_LITERAL = 256, /**< AST_LITERAL */
+    AST_STRING,        /**< AST_STRING */
+    AST_LVAR,          /**< AST_LVAR */
+    AST_GVAR,          /**< AST_GVAR */
+    AST_FUNCALL,       /**< AST_FUNCALL */
+    AST_FUNC,          /**< AST_FUNC */
+    AST_DECL,          /**< AST_DECL */
+    AST_ARRAY_INIT,    /**< AST_ARRAY_INIT */
+    AST_ADDR,          /**< AST_ADDR */
+    AST_DEREF,         /**< AST_DEREF */
+    AST_IF,            /**< AST_IF */
+    AST_TERNARY,       /**< AST_TERNARY */
+    AST_FOR,           /**< AST_FOR */
+    AST_RETURN,        /**< AST_RETURN */
+    AST_COMPOUND_STMT, /**< AST_COMPOUND_STMT */
+    AST_STRUCT_REF,    /**< AST_STRUCT_REF */
+    PUNCT_EQ,          /**< PUNCT_EQ */
+    PUNCT_INC,         /**< PUNCT_INC */
+    PUNCT_DEC,         /**< PUNCT_DEC */
+    PUNCT_LOGAND,      /**< PUNCT_LOGAND */
+    PUNCT_LOGOR,       /**< PUNCT_LOGOR */
+    PUNCT_ARROW,       /**< PUNCT_ARROW */
+    PUNCT_LSHIFT,      /**< PUNCT_LSHIFT */
+    PUNCT_RSHIFT,      /**< PUNCT_RSHIFT */
+    PUNCT_PREINC,      /**< PUNCT_PREINC */
+    PUNCT_PREDEC,      /**< PUNCT_PREDEC */
 };
 
 /**
@@ -98,18 +98,18 @@ enum {
  *
  */
 enum {
-    CTYPE_VOID,   /**< CTYPE_VOID */
-    CTYPE_CHAR,   /**< CTYPE_CHAR */
-    CTYPE_INT,    /**< CTYPE_INT */
-    CTYPE_LONG,   /**< CTYPE_LONG */
-    CTYPE_FLOAT,  /**< CTYPE_FLOAT */
-    CTYPE_UINT,   /**< CTYPE_UINT */
+    CTYPE_VOID,    /**< CTYPE_VOID */
+    CTYPE_CHAR,    /**< CTYPE_CHAR */
+    CTYPE_INT,     /**< CTYPE_INT */
+    CTYPE_LONG,    /**< CTYPE_LONG */
+    CTYPE_FLOAT,   /**< CTYPE_FLOAT */
+    CTYPE_UINT,    /**< CTYPE_UINT */
 #ifdef ALLOW_DOUBLE
-    CTYPE_DOUBLE, /**< CTYPE_DOUBLE */
+    CTYPE_DOUBLE,  /**< CTYPE_DOUBLE */
 #endif
-    CTYPE_ARRAY,  /**< CTYPE_ARRAY */
-    CTYPE_PTR,    /**< CTYPE_PTR */
-    CTYPE_STRUCT, /**< CTYPE_STRUCT */
+    CTYPE_ARRAY,   /**< CTYPE_ARRAY */
+    CTYPE_PTR,     /**< CTYPE_PTR */
+    CTYPE_STRUCT,  /**< CTYPE_STRUCT */
 };
 
 /**
@@ -118,13 +118,14 @@ enum {
  *
  */
 typedef struct ctype_s {
-                int type;
-                int size;
-    struct ctype_s *ptr; // pointer or array
-               int len;  // array length
-            // struct
-            dict_t *fields;
-               int offset;
+                int type;   //
+                int size;   //
+
+    struct ctype_s *ptr;    // pointer or array
+               int len;     // array length
+
+            dict_t *fields; // struct
+               int offset;  // struct
 } ctype_t;
 
 /**

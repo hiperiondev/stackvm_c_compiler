@@ -37,6 +37,8 @@ char* ctype_to_string(ctype_t *ctype) {
             return "(VOID)";
         case CTYPE_INT:
             return "(INT)";
+        case CTYPE_UINT:
+            return "(UINT)";
         case CTYPE_LONG:
             return "(LONG)";
         case CTYPE_CHAR:
@@ -106,6 +108,10 @@ void ast_to_string_int(string_t *buf, ast_t *ast, bool first_entry) {
                     break;
                 case CTYPE_INT:
                     util_string_appendf(buf, "(INT) ");
+                    util_string_appendf(buf, "%d", ast->ival);
+                    break;
+                case CTYPE_UINT:
+                    util_string_appendf(buf, "(UINT) ");
                     util_string_appendf(buf, "%d", ast->ival);
                     break;
                 case CTYPE_LONG:
