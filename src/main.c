@@ -25,20 +25,22 @@
 #include "codegenir.h"
 #include "parser.h"
 #include "verbose.h"
+#include "preprocess.h"
+
+FILE *outfp, *preprfp;
 
 static char *outfile = NULL, *infile = NULL;
-extern FILE *outfp;
 static bool dump_ast;
 extern void **mkstr;
 
-static void usage() {
+static void usage(void) {
     fprintf(stdout, "stackvm_c_compiler [options] filename\n"
             "OPTIONS\n"
             "  -o filename    Write output to the specified file.\n"
             "  --dump-ast     Dump abstract syntax tree(AST)\n");
 }
 
-static void print_usage_and_exit() {
+static void print_usage_and_exit(void) {
     usage();
     exit(1);
 }
@@ -81,7 +83,7 @@ static void parse_args(int argc, char **argv) {
     }
 }
 
-static void open_output_file() {
+static void open_output_file(void) {
     if (outfile) {
         if (!(outfp = fopen(outfile, "w"))) {
             printf("Can't open file %s\n", outfile);
@@ -92,16 +94,25 @@ static void open_output_file() {
     }
 }
 
-static void open_input_file() {
+static void open_input_file(void) {
     if (!infile) {
         printf("Input file is not specified\n\n");
         print_usage_and_exit();
     }
 
-    if (!freopen(infile, "r", stdin)) {
+    if (!(preprfp = fopen(infile, "r"))) {
+        printf("Can't open file %s\n", outfile);
+        exit(1);
+    }
+
+    if (!freopen(infile, "rw", stdin)) {
         printf("Can't open file %s\n", infile);
         exit(1);
     }
+
+    preprocess_file(preprfp, stdin);
+
+    fclose(preprfp);
 }
 
 int main(int argc, char **argv) {
@@ -117,7 +128,7 @@ int main(int argc, char **argv) {
     for (iter_t i = list_iter(toplevels); !list_iter_end(i);) {
         ast_t *v = list_iter_next(&i);
         if (dump_ast) {
-            char *aststr = ast_to_string(v, true);
+            char *aststr = verbose_ast_to_string(v, true);
             printf("%s \n", aststr);
             util_lfree(aststr);
         } else {

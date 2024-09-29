@@ -24,7 +24,7 @@
 #include "list.h"
 #include "codegenir.h"
 
-FILE *outfp;
+extern FILE *outfp;
 static list_t *functions = &list_empty;
 extern list_t *strings;
 extern list_t *flonums;
