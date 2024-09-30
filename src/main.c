@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "util.h"
 #include "c_stackvm.h"
@@ -27,11 +28,12 @@
 #include "verbose.h"
 #include "preprocess.h"
 
-FILE *outfp, *preprfp;
+FILE *outfp, *preprfp, *tempfp;
 
 static char *outfile = NULL, *infile = NULL;
 static bool dump_ast;
 extern void **mkstr;
+static char tmpfname[20];
 
 static void usage(void) {
     fprintf(stdout, "stackvm_c_compiler [options] filename\n"
@@ -93,24 +95,32 @@ static void open_output_file(void) {
         outfp = stdout;
     }
 }
-
 static void open_input_file(void) {
+    srand(time(NULL));
+    for (int i = 0; i < 20; ++i)
+        tmpfname[i] = 'A' + rand() % 26;
+
     if (!infile) {
         printf("Input file is not specified\n\n");
         print_usage_and_exit();
     }
 
     if (!(preprfp = fopen(infile, "r"))) {
-        printf("Can't open file %s\n", outfile);
+        printf("a-Can't open file %s\n", outfile);
         exit(1);
     }
 
-    if (!freopen(infile, "rw", stdin)) {
-        printf("Can't open file %s\n", infile);
+    if (!(tempfp = fopen(tmpfname, "w"))) {
+        printf("b-Can't open file %s\n", outfile);
         exit(1);
     }
 
-    preprocess_file(preprfp, stdin);
+    preprocess_file(preprfp, tempfp);
+
+    if (!freopen(tmpfname, "r", stdin)) {
+        printf("c-Can't open file %s\n", tmpfname);
+        exit(1);
+    }
 
     fclose(preprfp);
 }
@@ -144,6 +154,8 @@ int main(int argc, char **argv) {
 
     free(mkstr);
     fclose(outfp);
+    fclose(tempfp);
+    remove(tmpfname);
 
     return 0;
 }

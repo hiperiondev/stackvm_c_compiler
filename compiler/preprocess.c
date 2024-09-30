@@ -28,16 +28,17 @@ static void preprocess_include(FILE *file_in, FILE *file_out) {
 ///////////////////////////////////////////////////////////////////
 
 void preprocess_file(FILE *file_in, FILE *file_out) {
-    FILE *tempfp = tmpfile();
     int c;
 
-    preprocess_include(file_in, tempfp);
-    preprocess_switch_to_if(file_in, tempfp);
+    preprocess_include(file_in, file_out);
+    preprocess_switch_to_if(file_in, file_out);
 
-    while ((c = fgetc(tempfp)) != EOF) {
+    while ((c = fgetc(file_in)) != EOF) {
         fputc(c, file_out);
+        printf("%c", c);
     }
 
-    fclose(tempfp);
-}
+    printf("\n----------------------------\n\n");
 
+    rewind(file_out);
+}
